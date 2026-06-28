@@ -27,9 +27,12 @@ Approved languages, frameworks, libraries, and tools.
     is the generalizable core; adding companies beyond Nestlé = adding rows.
   - `barcodes(barcode TEXT PRIMARY KEY, brand_slug TEXT, match_source TEXT)` —
     pre-filtered to target-company products, derived from the Open Food Facts dump.
-- **GRDB.swift** — recommended SQLite access layer (robust, well-maintained,
-  excellent support for bundled read-only databases). `SQLite.swift` is an
-  acceptable alternative. Keep on-device DB dependencies to a single library.
+- **SQLite access — dependency-free (`SQLite3` system module).** Decision (M1):
+  the lookup is a single trivial `SELECT`, so the app talks to the bundled SQLite
+  directly via iOS's built-in `SQLite3` C library wrapped in a small Swift type
+  (`BarcodeDatabase`) — **no third-party dependency, no SPM fetch.** This matches
+  the minimal-dependency / privacy posture. **GRDB.swift** remains the documented
+  fallback if the data layer grows beyond simple reads (it can be adopted in M2+).
 
 ### Data Sources
 

@@ -1,0 +1,41 @@
+name: isNestle
+options:
+  bundleIdPrefix: net.1x0
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"          # iPhone only
+    DEVELOPMENT_TEAM: ""                 # set your team in Xcode to run on device
+    CODE_SIGN_STYLE: Automatic
+targets:
+  isNestle:
+    type: application
+    platform: iOS
+    sources:
+      - path: isNestle
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.1x0.isNestle
+        GENERATE_INFOPLIST_FILE: "YES"
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_NSCameraUsageDescription: "isNestle uses the camera only to scan product barcodes on your device. Nothing is recorded, stored, or sent anywhere."
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
+    scheme:
+      testTargets:
+        - isNestleTests
+  isNestleTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: isNestleTests
+    dependencies:
+      - target: isNestle
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/isNestle.app/isNestle"
+        BUNDLE_LOADER: "$(TEST_HOST)"

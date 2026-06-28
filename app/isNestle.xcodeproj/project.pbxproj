@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0ECA6EEA509D0D55F63B0257 /* isnestle.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 33612824030331A3C662AAA3 /* isnestle.sqlite */; };
+		1DA748478E1B2F50D84B439D /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84F6F71214A46D53DA98FFB /* AboutView.swift */; };
+		2B273FEDF19D3A3D9765C214 /* isNestleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB42E9EFDDEC1A64022EF699 /* isNestleApp.swift */; };
+		57C1DFC151584D105BF35A3F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFD1F3077871B05D58A30526 /* AppModel.swift */; };
+		5A5C437CA7578376829BAC8B /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EA63D6EA49D603358AB233 /* Models.swift */; };
+		62060D17BAF84A96B2722F50 /* ScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3189DA1A2126EA2163B29F /* ScannerView.swift */; };
+		6393AF8223991CAAA23A4A9C /* ManualSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264D22208AF1EE9116B3D59C /* ManualSearchView.swift */; };
+		6ABC567EEAFFC08F27162A5E /* LookupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 955ABF601D016B27371B9FD4 /* LookupTests.swift */; };
+		90001EB33175FFE8CF36D46E /* VerdictView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5DC6924F5CFFE85990E5609 /* VerdictView.swift */; };
+		A50665DDD0EDA9150422858E /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF8352F876E2585D64F1491 /* RootView.swift */; };
+		E98E7B043C5C1638D7F5324C /* BarcodeDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5093A50F6D3843765C75A /* BarcodeDatabase.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5FAB1EF11E6179C61A79234B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB3DE53FFC9109E161D7F555 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F631ECB8587C3F23A361954;
+			remoteInfo = isNestle;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1B3189DA1A2126EA2163B29F /* ScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
+		264D22208AF1EE9116B3D59C /* ManualSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualSearchView.swift; sourceTree = "<group>"; };
+		33612824030331A3C662AAA3 /* isnestle.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = isnestle.sqlite; sourceTree = "<group>"; };
+		78B5093A50F6D3843765C75A /* BarcodeDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeDatabase.swift; sourceTree = "<group>"; };
+		86EA63D6EA49D603358AB233 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		955ABF601D016B27371B9FD4 /* LookupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookupTests.swift; sourceTree = "<group>"; };
+		C84F6F71214A46D53DA98FFB /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		DB42E9EFDDEC1A64022EF699 /* isNestleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = isNestleApp.swift; sourceTree = "<group>"; };
+		DFD1F3077871B05D58A30526 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		E5447DD1E81C9410D0DB94BE /* isNestle.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = isNestle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EF354C2340A020F587F8D861 /* isNestleTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = isNestleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5DC6924F5CFFE85990E5609 /* VerdictView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerdictView.swift; sourceTree = "<group>"; };
+		FBF8352F876E2585D64F1491 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		053BBB69A1193C3AC3C5234F /* isNestle */ = {
+			isa = PBXGroup;
+			children = (
+				DFD1F3077871B05D58A30526 /* AppModel.swift */,
+				DB42E9EFDDEC1A64022EF699 /* isNestleApp.swift */,
+				86EA63D6EA49D603358AB233 /* Models.swift */,
+				DE6F19A85330D4B4328CCE5D /* Data */,
+				6188C822BA1EA9528C789F93 /* Resources */,
+				B2E51CE828D8BA9E411CB8EF /* Views */,
+			);
+			path = isNestle;
+			sourceTree = "<group>";
+		};
+		3F2722B5DF50742EACFCAF04 = {
+			isa = PBXGroup;
+			children = (
+				053BBB69A1193C3AC3C5234F /* isNestle */,
+				E5CAB4D8431848824BB231B7 /* isNestleTests */,
+				AE7532A80ED09183759E943D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6188C822BA1EA9528C789F93 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				33612824030331A3C662AAA3 /* isnestle.sqlite */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AE7532A80ED09183759E943D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E5447DD1E81C9410D0DB94BE /* isNestle.app */,
+				EF354C2340A020F587F8D861 /* isNestleTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B2E51CE828D8BA9E411CB8EF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C84F6F71214A46D53DA98FFB /* AboutView.swift */,
+				264D22208AF1EE9116B3D59C /* ManualSearchView.swift */,
+				FBF8352F876E2585D64F1491 /* RootView.swift */,
+				1B3189DA1A2126EA2163B29F /* ScannerView.swift */,
+				F5DC6924F5CFFE85990E5609 /* VerdictView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DE6F19A85330D4B4328CCE5D /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				78B5093A50F6D3843765C75A /* BarcodeDatabase.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		E5CAB4D8431848824BB231B7 /* isNestleTests */ = {
+			isa = PBXGroup;
+			children = (
+				955ABF601D016B27371B9FD4 /* LookupTests.swift */,
+			);
+			path = isNestleTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		14A161D9AD04A70E262649B7 /* isNestleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 38E6A6678A9D750D473E411F /* Build configuration list for PBXNativeTarget "isNestleTests" */;
+			buildPhases = (
+				5781726891FC67ED33AFADDF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				744576D7E9C38C9025D13D16 /* PBXTargetDependency */,
+			);
+			name = isNestleTests;
+			packageProductDependencies = (
+			);
+			productName = isNestleTests;
+			productReference = EF354C2340A020F587F8D861 /* isNestleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5F631ECB8587C3F23A361954 /* isNestle */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23D90466322FB130296DEEF9 /* Build configuration list for PBXNativeTarget "isNestle" */;
+			buildPhases = (
+				59A3584A5F92955A16B54EA4 /* Sources */,
+				6F60F06B353C338FEB40CAA1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = isNestle;
+			packageProductDependencies = (
+			);
+			productName = isNestle;
+			productReference = E5447DD1E81C9410D0DB94BE /* isNestle.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EB3DE53FFC9109E161D7F555 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					14A161D9AD04A70E262649B7 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					5F631ECB8587C3F23A361954 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 2F93C9317781FBCCFF9EEAE9 /* Build configuration list for PBXProject "isNestle" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3F2722B5DF50742EACFCAF04;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AE7532A80ED09183759E943D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5F631ECB8587C3F23A361954 /* isNestle */,
+				14A161D9AD04A70E262649B7 /* isNestleTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6F60F06B353C338FEB40CAA1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0ECA6EEA509D0D55F63B0257 /* isnestle.sqlite in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5781726891FC67ED33AFADDF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6ABC567EEAFFC08F27162A5E /* LookupTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59A3584A5F92955A16B54EA4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DA748478E1B2F50D84B439D /* AboutView.swift in Sources */,
+				57C1DFC151584D105BF35A3F /* AppModel.swift in Sources */,
+				E98E7B043C5C1638D7F5324C /* BarcodeDatabase.swift in Sources */,
+				6393AF8223991CAAA23A4A9C /* ManualSearchView.swift in Sources */,
+				5A5C437CA7578376829BAC8B /* Models.swift in Sources */,
+				A50665DDD0EDA9150422858E /* RootView.swift in Sources */,
+				62060D17BAF84A96B2722F50 /* ScannerView.swift in Sources */,
+				90001EB33175FFE8CF36D46E /* VerdictView.swift in Sources */,
+				2B273FEDF19D3A3D9765C214 /* isNestleApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		744576D7E9C38C9025D13D16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F631ECB8587C3F23A361954 /* isNestle */;
+			targetProxy = 5FAB1EF11E6179C61A79234B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		20456822D7BF082005F2A233 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "isNestle uses the camera only to scan product barcodes on your device. Nothing is recorded, stored, or sent anywhere.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.1x0.isNestle;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		69927D646A9C3D60FA4F3ED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B3B07AA105E65E4B7E7FBB81 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		D124F917F8EF63EFE24AB1D8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = net.1x0.isNestleTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/isNestle.app/isNestle";
+			};
+			name = Debug;
+		};
+		E600FB9BDC17E7001C837B80 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = net.1x0.isNestleTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/isNestle.app/isNestle";
+			};
+			name = Release;
+		};
+		EE3D459A5E93ECD51DE8D269 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "isNestle uses the camera only to scan product barcodes on your device. Nothing is recorded, stored, or sent anywhere.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.1x0.isNestle;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		23D90466322FB130296DEEF9 /* Build configuration list for PBXNativeTarget "isNestle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				20456822D7BF082005F2A233 /* Debug */,
+				EE3D459A5E93ECD51DE8D269 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2F93C9317781FBCCFF9EEAE9 /* Build configuration list for PBXProject "isNestle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				69927D646A9C3D60FA4F3ED6 /* Debug */,
+				B3B07AA105E65E4B7E7FBB81 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		38E6A6678A9D750D473E411F /* Build configuration list for PBXNativeTarget "isNestleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D124F917F8EF63EFE24AB1D8 /* Debug */,
+				E600FB9BDC17E7001C837B80 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = EB3DE53FFC9109E161D7F555 /* Project object */;
+}
