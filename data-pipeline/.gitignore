@@ -1,0 +1,4 @@
+# Generated / downloaded artifacts — reproducible by running the scripts.
+out/
+__pycache__/
+*.pyc
