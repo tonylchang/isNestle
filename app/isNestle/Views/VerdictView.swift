@@ -71,7 +71,7 @@ private struct VerdictStyle {
         switch verdict {
         case .match:     return Color(red: 0.78, green: 0.13, blue: 0.13)
         case .notTarget: return Color(red: 0.13, green: 0.50, blue: 0.24)
-        case .unknown:   return Color(red: 0.36, green: 0.38, blue: 0.42)
+        case .unknown:   return Color(red: 0.16, green: 0.52, blue: 0.30)
         }
     }
 
@@ -79,7 +79,7 @@ private struct VerdictStyle {
         switch verdict {
         case .match:     return "xmark.octagon.fill"
         case .notTarget: return "checkmark.seal.fill"
-        case .unknown:   return "questionmark.circle.fill"
+        case .unknown:   return "checkmark.seal.fill"
         }
     }
 
@@ -87,7 +87,7 @@ private struct VerdictStyle {
         switch verdict {
         case .match:     return Target.name.uppercased()
         case .notTarget: return "NOT \(Target.name.uppercased())"
-        case .unknown:   return "UNKNOWN"
+        case .unknown:   return "NO \(Target.name.uppercased()) MATCH"
         }
     }
 
@@ -99,7 +99,7 @@ private struct VerdictStyle {
         case .notTarget:
             return "This product is not made by \(Target.name)."
         case .unknown:
-            return "This barcode isn’t in the offline database. It may be a \(Target.name) product that isn’t catalogued yet — try a brand search."
+            return "Not found in the \(Target.name) database, so it’s most likely fine. Coverage isn’t exhaustive, though — this isn’t a guarantee. You can double-check with a brand search."
         }
     }
 
