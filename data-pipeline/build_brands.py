@@ -55,6 +55,31 @@ DENY_SLUGS = {
     "galderma", "cetaphil", "alcon", "sanofi", "novartis", "sanofi-aventis",
 }
 
+# Wikidata's P176 ("manufacturer") edge drags in Nestlé's *patent portfolio* as
+# if each invention were a brand (e.g. "method-for-cooking-food-in-a-..."). These
+# are harmless (zero barcodes) but pollute the table, so drop anything that reads
+# like a patent/process/composition rather than a consumer brand. High-precision:
+# none of these tokens appear in real Nestlé brand names, and the >=6-word rule
+# spares real multi-word lines like "purina-pro-plan-veterinary-diets" (5 words).
+_NON_BRAND_WORDS = {
+    "composition", "compositions", "method", "methods", "apparatus",
+    "apparatuses", "device", "devices", "process", "comprising", "thereof",
+    "dispenser", "dispensing", "formulation", "formulations", "packaging",
+    "package", "vessel", "frothing", "foaming", "brewing", "microorganisms",
+    "oligosaccharide", "oligosaccharides", "probiotic", "triacylglyceride",
+    "melatonin", "immunotherapy", "enteral", "swallowing", "nociception",
+    "myelination", "particles", "infants",
+}
+
+
+def is_non_brand_noise(slug: str) -> bool:
+    """True if a slug looks like a patent/process title, not a consumer brand."""
+    words = slug.split("-")
+    if len(words) >= 6:                     # long descriptive phrase => not a brand
+        return True
+    return any(w in _NON_BRAND_WORDS for w in words)
+
+
 # Ownership/containment edges used to walk Nestlé's portfolio.
 #   P127 owner, P176 manufacturer, P749 parent org, P355 subsidiary (inverse),
 #   P1830 owner-of (inverse).  The path below means: "?item is reachable from
@@ -93,10 +118,15 @@ def fetch_wikidata() -> tuple[list[str], list[str]]:
     # the proven plain transitive query so a SPARQL quirk doesn't lose Wikidata.
     for label, builder in (("rich", _sparql_rich), ("plain", _sparql_plain)):
         try:
+            # WDQS may be under an active-outage rule that rate-limits to
+            # ~1 req/min. Default backoff retries all land inside the same
+            # blocked minute, so wait out the window (~65s) between attempts.
             data = http_get_json(
                 WIKIDATA_SPARQL,
                 {"query": builder(), "format": "json"},
                 timeout=90,
+                retries=3,
+                backoff=65,
             )
             if label == "plain":
                 notes.append("wikidata: rich query failed, used plain fallback "
@@ -284,15 +314,19 @@ def main() -> int:
     src_raw = {"wikidata": len(wd_names), "wikipedia": len(wp_names), "curated": len(cur_pairs)}
     dropped_deny = 0
     dropped_empty = 0
+    dropped_noise = 0
 
     def add(name: str, source: str, slug: str | None = None) -> None:
-        nonlocal dropped_deny, dropped_empty
+        nonlocal dropped_deny, dropped_empty, dropped_noise
         slug = off_slug(name) if slug is None else slug
         if not slug:
             dropped_empty += 1
             return
         if slug in DENY_SLUGS:
             dropped_deny += 1
+            return
+        if is_non_brand_noise(slug):
+            dropped_noise += 1
             return
         if slug in table:
             return
@@ -330,7 +364,7 @@ def main() -> int:
           f"wikipedia={src_raw['wikipedia']:4d}  curated={src_raw['curated']:3d}")
     print(f"Per-source NEW slugs:    wikidata={src_new['wikidata']:5d}  "
           f"wikipedia={src_new['wikipedia']:4d}  curated={src_new['curated']:3d}")
-    print(f"Dropped (denylist={dropped_deny}, empty-slug={dropped_empty})")
+    print(f"Dropped (denylist={dropped_deny}, noise={dropped_noise}, empty-slug={dropped_empty})")
     print(f"TOTAL unique brands: {len(rows)}")
     print(f"Wrote: {BRANDS_CSV}")
     print()
