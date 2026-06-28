@@ -8,17 +8,20 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"          # iPhone only
-    DEVELOPMENT_TEAM: ""                 # set your team in Xcode to run on device
     CODE_SIGN_STYLE: Automatic
+    # Signing (DEVELOPMENT_TEAM, PRODUCT_BUNDLE_IDENTIFIER) comes from the
+    # gitignored app/Local.xcconfig — see app/Local.xcconfig.example.
 targets:
   isNestle:
     type: application
     platform: iOS
+    configFiles:
+      Debug: Local.xcconfig
+      Release: Local.xcconfig
     sources:
       - path: isNestle
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.1x0.isNestle
         GENERATE_INFOPLIST_FILE: "YES"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"

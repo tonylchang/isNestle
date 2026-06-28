@@ -35,13 +35,22 @@ The bundled `isNestle/Resources/isnestle.sqlite` is produced by the
 ## Build & run
 
 The project is generated with [XcodeGen](https://github.com/yonyz/XcodeGen) from
-`project.yml` (the source of truth). The generated `isNestle.xcodeproj` is also
-committed, so you can open it directly.
+`project.yml` (the source of truth). The `.xcodeproj` is **not committed** — you
+generate it locally. **Signing lives in a gitignored `Local.xcconfig`**, so your
+personal team / bundle id never land in git and `xcodegen generate` never wipes
+them.
+
+First-time setup:
+```bash
+brew install xcodegen
+cd app
+cp Local.xcconfig.example Local.xcconfig    # then set DEVELOPMENT_TEAM (+ bundle id)
+xcodegen generate                           # creates isNestle.xcodeproj
+open isNestle.xcodeproj
+```
+Re-run `xcodegen generate` after editing `project.yml` (e.g. adding files).
 
 ```bash
-# (only if you changed project.yml)
-brew install xcodegen && cd app && xcodegen generate
-
 # Build for the simulator
 xcodebuild -project app/isNestle.xcodeproj -scheme isNestle \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
@@ -52,13 +61,15 @@ xcodebuild test -project app/isNestle.xcodeproj -scheme isNestle \
 ```
 
 ### Run on your iPhone
-1. Open `app/isNestle.xcodeproj` in Xcode.
-2. Select the **isNestle** target → Signing & Capabilities → set your **Team**
-   (free Apple ID works for development). The bundle id defaults to
-   `net.1x0.isNestle` — change if needed.
-3. Pick your device and Run. Grant camera access when prompted, point at a
-   barcode.
+1. Set `DEVELOPMENT_TEAM` (and a unique `PRODUCT_BUNDLE_IDENTIFIER`) in
+   `app/Local.xcconfig`, then `xcodegen generate` and open the project.
+2. Pick your device and **Run** (⌘R). A **free Apple ID works** for development.
+3. First launch: trust the cert (Settings → General → VPN & Device Management),
+   make sure **Developer Mode** is on (Settings → Privacy & Security), and
+   **reboot** if the app won't launch after trusting.
+4. Grant camera access when prompted, point at a barcode.
 
 ### Dev hook
 A `#if DEBUG`-only launch argument pre-loads a verdict for screenshots without a
-camera: `xcrun simctl launch booted net.1x0.isNestle -demoBarcode 3023290000953`.
+camera (use whatever `PRODUCT_BUNDLE_IDENTIFIER` you set in `Local.xcconfig`):
+`xcrun simctl launch booted <your.bundle.id> -demoBarcode 3023290000953`.

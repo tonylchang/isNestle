@@ -1,0 +1,15 @@
+// Template for local signing config.
+//
+// Copy this file to `Local.xcconfig` (which is gitignored) and fill in your
+// own values. project.yml reads signing from Local.xcconfig, so `xcodegen
+// generate` will never overwrite your personal team / bundle id again.
+//
+//   cp Local.xcconfig.example Local.xcconfig
+//   # then edit the two values below
+//
+// DEVELOPMENT_TEAM: your Apple Developer Team ID (Xcode → Settings → Accounts →
+//   your team → "Team ID"). Leave empty to sign manually / build for simulator.
+// PRODUCT_BUNDLE_IDENTIFIER: the app's bundle id (must be unique to your team).
+
+DEVELOPMENT_TEAM =
+PRODUCT_BUNDLE_IDENTIFIER = net.1x0.isNestle
