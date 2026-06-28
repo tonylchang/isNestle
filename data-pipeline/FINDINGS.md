@@ -59,9 +59,11 @@ The eventual data model may need to represent "made by X, in region Y."
 - **Wikidata Query Service is rate-limited during its active outage** (~1 req/min).
   `build_brands.py` waits out the window (~65 s) between attempts; a healthy WDQS
   will be much faster.
-- **Barcodes capped at 25/brand** for the spike (some brands have thousands).
-  The production daily pipeline (see `INFRA.md`) should use the full OFF bulk dump
-  rather than per-brand API queries.
+- **Barcode coverage expanded post-spike.** The 25/brand spike cap was removed in
+  favor of full pagination (250/page, up to OFF's 10k result window) — the dataset
+  is now **33,275 barcodes** (~2.9 MB SQLite), with **no brand exceeding the
+  window**. The full OFF bulk dump remains the eventual production source (see
+  `INFRA.md`) for products beyond what Search-a-licious returns (e.g. pet care).
 
 ## Implications for the build
 

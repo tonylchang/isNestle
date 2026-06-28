@@ -21,9 +21,9 @@ import time
 
 import common
 
-PAGE_SIZE = 25            # modest page size — be polite to OFF
-CAP_PER_BRAND = 25        # SPIKE CAP: at most this many barcodes per brand
-SLEEP_SECONDS = 0.5       # short pause between requests
+PAGE_SIZE = 250           # Search-a-licious allows up to 250 results/page
+RESULT_WINDOW = 10000     # OFF/Elasticsearch max_result_window (hard upper bound)
+SLEEP_SECONDS = 0.4       # short pause between requests
 SOURCE = "off-search-a-licious"
 
 
@@ -41,23 +41,36 @@ def read_brand_slugs(path: str) -> list[str]:
 
 
 def fetch_for_slug(slug: str) -> tuple[list[str], int]:
-    """Return (barcodes matching this slug exactly, total OFF count for the slug)."""
-    data = common.http_get_json(
-        common.OFF_SEARCH_URL,
-        {"q": f"brands_tags:{slug}", "fields": "code,brands_tags", "page_size": PAGE_SIZE},
-    )
-    total = int(data.get("count") or 0)
+    """Return (barcodes matching this slug exactly, total OFF count for the slug).
+
+    Paginates the full result set (up to the Elasticsearch result window) so we
+    get complete Nestlé coverage rather than a 25-barcode sample.
+    """
     codes: list[str] = []
-    for hit in data.get("hits", []) or []:
-        code = (hit.get("code") or "").strip()
-        tags = hit.get("brands_tags") or []
-        if not code:
-            continue
-        # Exact-match reconciliation against OFF's own tags.
-        if slug in tags:
-            codes.append(code)
-        if len(codes) >= CAP_PER_BRAND:
+    total = 0
+    page = 1
+    while True:
+        data = common.http_get_json(
+            common.OFF_SEARCH_URL,
+            {"q": f"brands_tags:{slug}", "fields": "code,brands_tags",
+             "page_size": PAGE_SIZE, "page": page},
+        )
+        if page == 1:
+            total = int(data.get("count") or 0)
+        hits = data.get("hits", []) or []
+        if not hits:
             break
+        for hit in hits:
+            code = (hit.get("code") or "").strip()
+            tags = hit.get("brands_tags") or []
+            # Exact-match reconciliation against OFF's own tags.
+            if code and slug in tags:
+                codes.append(code)
+        fetched = page * PAGE_SIZE
+        if fetched >= total or fetched >= RESULT_WINDOW:
+            break
+        page += 1
+        time.sleep(SLEEP_SECONDS)
     return codes, total
 
 
@@ -81,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     common.ensure_out()
     print(f"OFF barcode pipeline: {len(slugs)} brand slugs from {args.brands}")
-    print(f"(spike cap = {CAP_PER_BRAND} barcodes/brand, page_size = {PAGE_SIZE})\n")
+    print(f"(full pagination, page_size = {PAGE_SIZE}, window = {RESULT_WINDOW})\n")
 
     # barcode -> (brand_slug, source); first slug to claim a barcode wins (dedupe).
     collected: dict[str, tuple[str, str]] = {}
@@ -105,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
                 new += 1
         per_slug_kept[slug] = len(codes)
         per_slug_total[slug] = total
-        capped = " (capped)" if total > CAP_PER_BRAND else ""
+        capped = " (window-capped)" if total > RESULT_WINDOW else ""
         print(f"  {slug:20} off_total={total:>6}  kept={len(codes):>3}  new={new:>3}{capped}")
         time.sleep(SLEEP_SECONDS)
 
