@@ -218,91 +218,117 @@ private struct VerdictPanel: View {
     }
 }
 
-/// Calm & detailed: a proper card with a colored verdict header band, structured
-/// Product / Ownership fields (ownership shown as a small tree), the "why", and the
-/// data sources. A clear contrast to Minimal's full-screen color flood. Color is
-/// always reinforced by an icon + text.
+/// "Ownership record" — a calm, typographic dossier, deliberately a different
+/// design language from Minimal: no color flood; serif content + monospaced labels;
+/// the verdict reduced to a small colour-coded stamp; the scanned GTIN shown as the
+/// record reference; brand/parent as filed fields separated by hairline rules.
 private struct InformationalPanel: View {
     let result: OwnershipResult
     let isLookingUp: Bool
     private var style: VerdictStyle { VerdictStyle(result.verdict) }
 
+    private var determination: String {
+        switch result.verdict {
+        case .match:     return Target.name
+        case .notTarget: return "Not \(Target.name)"
+        case .unknown:   return "No \(Target.name) record"
+        }
+    }
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                // Colored verdict header band.
-                HStack(spacing: 12) {
-                    Image(systemName: style.symbol).font(.title2.weight(.bold))
-                    Text(style.headline).font(.title2.weight(.heavy))
-                    Spacer(minLength: 0)
-                }
-                .foregroundStyle(.white)
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(style.color)
+            VStack(alignment: .leading, spacing: 0) {
+                eyebrow("OWNERSHIP RECORD")
+                Text("GTIN \(result.query)")
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 3)
 
-                // Neutral card body.
-                VStack(alignment: .leading, spacing: 16) {
-                    if let name = result.displayName {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Label("PRODUCT", systemImage: "shippingbox.fill")
-                                .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-                            Text(name).font(.title3.weight(.semibold))
-                        }
-                    }
-                    if !result.chain.isEmpty {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Label("OWNERSHIP", systemImage: "building.2.fill")
-                                .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-                            ownershipChain
-                        }
-                    }
-                    Divider()
-                    Text(style.detail(result)).font(.subheadline)
-                    if result.fromOnline {
-                        Label("Identified via online lookup", systemImage: "wifi")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    if isLookingUp {
-                        HStack(spacing: 6) {
-                            ProgressView()
-                            Text("Checking online…").font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Text("Data: Open Food Facts (ODbL), Wikidata (CC0). May be incomplete.")
-                        .font(.caption2).foregroundStyle(.tertiary).padding(.top, 4)
+                rule()
+                eyebrow("DETERMINATION")
+                HStack(spacing: 10) {
+                    RoundedRectangle(cornerRadius: 2).fill(style.color)
+                        .frame(width: 13, height: 13)
+                        .accessibilityHidden(true)
+                    Text(determination)
+                        .font(.system(.title2, design: .serif).weight(.semibold))
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemBackground))
+                .padding(.top, 5)
+
+                if result.brandName != nil || result.productName != nil {
+                    rule()
+                    if let product = result.productName {
+                        eyebrow("PRODUCT")
+                        Text(product)
+                            .font(.system(.title3, design: .serif))
+                            .padding(.top, 3)
+                    }
+                    if let brand = result.brandName {
+                        recordRow("BRAND", brand)
+                            .padding(.top, result.productName != nil ? 12 : 0)
+                    }
+                    if let parent = result.parent {
+                        recordRow("PARENT", parent).padding(.top, 8)
+                    }
+                }
+
+                rule()
+                eyebrow("ASSESSMENT")
+                Text(style.detail(result))
+                    .font(.system(.subheadline, design: .serif))
+                    .padding(.top, 5)
+                if isLookingUp {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.small)
+                        Text("checking online…").font(.system(.caption, design: .monospaced))
+                    }
+                    .foregroundStyle(.secondary).padding(.top, 8)
+                } else if result.fromOnline {
+                    Text("via online lookup")
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary).padding(.top, 8)
+                }
+
+                rule()
+                eyebrow("SOURCES")
+                Text("Open Food Facts (ODbL) · Wikidata (CC0)")
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 5)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.quaternary))
-            .shadow(color: .black.opacity(0.10), radius: 10, y: 4)
-            .padding()
+            .padding(22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .padding(16)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(style.accessibilityLabel(result))
     }
 
-    /// Ownership rendered as a small tree: brand(s) → parent, parent flagged.
-    private var ownershipChain: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(result.chain.enumerated()), id: \.offset) { idx, node in
-                let isParent = idx == result.chain.count - 1
-                HStack(spacing: 8) {
-                    Image(systemName: isParent ? "flag.checkered" : "tag.fill")
-                        .font(.caption)
-                        .foregroundStyle(isParent ? style.color : .secondary)
-                        .frame(width: 18)
-                    Text(node).font(isParent ? .headline : .subheadline.weight(.medium))
-                    Spacer(minLength: 0)
-                }
-                if !isParent {
-                    Image(systemName: "arrow.down")
-                        .font(.caption2).foregroundStyle(.tertiary).padding(.leading, 5)
-                }
-            }
+    private func eyebrow(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.caption2, design: .monospaced))
+            .tracking(2)
+            .foregroundStyle(.secondary)
+    }
+
+    private func rule() -> some View {
+        Rectangle()
+            .fill(Color(.separator))
+            .frame(height: 1)
+            .padding(.vertical, 16)
+    }
+
+    private func recordRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .font(.system(.caption2, design: .monospaced)).tracking(2)
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+            Text(value)
+                .font(.system(.subheadline, design: .serif).weight(.medium))
+            Spacer(minLength: 0)
         }
     }
 }

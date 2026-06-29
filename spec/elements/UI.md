@@ -48,10 +48,11 @@ model).
   the ownership chain (brand → parent), and a one-line explanation — readable in a
   fraction of a second at the shelf. Rendered inline beneath the live camera (not a
   full-screen takeover), so the user can keep scanning.
-- **Informational** (shipped) — calm & detailed. A neutral card with a colored
-  accent stripe + verdict header, the product/brand name, the ownership chain
-  (brand → parent), the explanation, and the data-source note — for users who want
-  the "why."
+- **Informational** (shipped) — a calm, typographic **"ownership record" dossier**,
+  a deliberately different design language from Minimal: no color flood; **serif**
+  content + **monospaced** labels; the verdict reduced to a small colour-coded
+  **stamp**; the scanned **GTIN** as the record reference; brand/parent as filed
+  fields separated by hairline rules — for users who want the "why."
 
 The user picks the active theme in **Settings** (gear icon). Themes share a single
 verdict data model (`ResultPanel` switches on `AppTheme`), so adding a third theme
