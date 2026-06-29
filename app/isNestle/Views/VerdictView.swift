@@ -174,6 +174,8 @@ private struct VerdictPanel: View {
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
             }
             if !result.chain.isEmpty {
                 Text(result.chain.joined(separator: "  →  "))

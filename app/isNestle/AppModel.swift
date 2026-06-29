@@ -26,10 +26,11 @@ final class AppModel: ObservableObject {
         db = BarcodeDatabase()
         onlineEnabled = UserDefaults.standard.bool(forKey: Self.onlineKey)
         #if DEBUG
-        // Dev hook: `-demoBarcode <code>` pre-loads a verdict for screenshots.
+        // Dev hook: `-demoBarcode <code>` runs a full scan (including the online
+        // path when online lookup is enabled) for screenshots / manual testing.
         if let i = CommandLine.arguments.firstIndex(of: "-demoBarcode"),
-           i + 1 < CommandLine.arguments.count, let db {
-            result = db.lookup(barcode: CommandLine.arguments[i + 1])
+           i + 1 < CommandLine.arguments.count {
+            handleScanned(CommandLine.arguments[i + 1])
         }
         #endif
     }
