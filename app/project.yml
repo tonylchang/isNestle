@@ -22,6 +22,9 @@ targets:
       - path: isNestle
     settings:
       base:
+        # iPhone-only (target-level wins over the project default of 1,2). Keeps the
+        # app out of iPad multitasking, so portrait-only is valid (App Store 90474).
+        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: "YES"
         # Base plist supplies the top-level CFBundleIconName (App Store error 90713);
         # generated keys merge on top. See app/Info.plist.
