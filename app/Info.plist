@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Base Info.plist: holds only keys the generator won't emit. Xcode merges
+	     the auto-generated keys (bundle id, versions, camera usage, etc.) on top
+	     because GENERATE_INFOPLIST_FILE is also enabled. -->
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+</dict>
+</plist>
