@@ -42,11 +42,13 @@ Two separate pipelines:
 
 ## Domain & DNS
 
-- **GitHub Pages** hosts the required **privacy policy** page (the App Store
-  mandates a privacy policy URL even though the app collects nothing) and can host
-  a simple landing page.
-- **Custom domain: TBD.** Default `*.github.io` URL is acceptable to start; a
-  custom domain (e.g., `isnestle.app`) can be added to GitHub Pages later.
+- **GitHub Pages** hosts the required **privacy policy** page — **live** at
+  <https://tonylchang.github.io/isNestle/> (served from `/docs` on `main`, linked
+  from the app's Settings). The repo is now **public** (matching the MIT /
+  open-source plan), which also unlocks free Actions and serves as the ODbL
+  publication point.
+- **Custom domain: TBD.** The default `*.github.io` URL is fine to start; a custom
+  domain (e.g., `isnestle.app`) can be added later.
 
 ## Monitoring & Observability
 
