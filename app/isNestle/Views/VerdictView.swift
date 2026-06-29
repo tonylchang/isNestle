@@ -119,10 +119,16 @@ private struct VerdictStyle {
 struct ResultPanel: View {
     let result: OwnershipResult?
     let isLookingUp: Bool
+    let theme: AppTheme
 
     var body: some View {
         if let result {
-            VerdictPanel(result: result, isLookingUp: isLookingUp)
+            switch theme {
+            case .minimal:
+                VerdictPanel(result: result, isLookingUp: isLookingUp)
+            case .informational:
+                InformationalPanel(result: result, isLookingUp: isLookingUp)
+            }
         } else {
             IdlePanel()
         }
@@ -209,5 +215,65 @@ private struct VerdictPanel: View {
         .background(style.color)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(style.accessibilityLabel(result))
+    }
+}
+
+/// Calm & detailed: a neutral card with a colored accent + verdict header, the
+/// product/brand name, the ownership chain, and supporting context. Color is
+/// reinforced by an icon + text (never color alone).
+private struct InformationalPanel: View {
+    let result: OwnershipResult
+    let isLookingUp: Bool
+    private var style: VerdictStyle { VerdictStyle(result.verdict) }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 12) {
+                    Image(systemName: style.symbol)
+                        .font(.title).foregroundStyle(style.color)
+                    Text(style.headline)
+                        .font(.title2.weight(.heavy)).foregroundStyle(style.color)
+                }
+
+                if let name = result.displayName {
+                    labeled("Product", name)
+                }
+                if !result.chain.isEmpty {
+                    labeled("Ownership", result.chain.joined(separator: "  →  "))
+                }
+
+                Text(style.detail(result))
+                    .font(.subheadline)
+
+                if result.fromOnline {
+                    Label("Identified via online lookup", systemImage: "wifi")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if isLookingUp {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                        Text("Checking online…").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer(minLength: 12)
+                Text("Data: Open Food Facts (ODbL), Wikidata (CC0). May be incomplete.")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .overlay(alignment: .leading) { Rectangle().fill(style.color).frame(width: 5) }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(style.accessibilityLabel(result))
+    }
+
+    @ViewBuilder
+    private func labeled(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+            Text(value).font(.headline)
+        }
     }
 }

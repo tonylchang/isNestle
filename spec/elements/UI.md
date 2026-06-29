@@ -48,12 +48,14 @@ model).
   the ownership chain (brand → parent), and a one-line explanation — readable in a
   fraction of a second at the shelf. Rendered inline beneath the live camera (not a
   full-screen takeover), so the user can keep scanning.
-- **Informational** — calm & detailed. A neutral card showing the verdict *plus*
-  the full ownership chain (product → brand → subsidiary → parent) and any
-  supporting context, for users who want the "why."
+- **Informational** (shipped) — calm & detailed. A neutral card with a colored
+  accent stripe + verdict header, the product/brand name, the ownership chain
+  (brand → parent), the explanation, and the data-source note — for users who want
+  the "why."
 
-The user picks the active theme in settings. Themes share a single verdict data
-model so adding a third theme is purely additive.
+The user picks the active theme in **Settings** (gear icon). Themes share a single
+verdict data model (`ResultPanel` switches on `AppTheme`), so adding a third theme
+is purely additive.
 
 ### Appearance
 

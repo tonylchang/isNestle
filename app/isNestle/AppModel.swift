@@ -18,13 +18,19 @@ final class AppModel: ObservableObject {
     @Published var onlineEnabled: Bool {
         didSet { UserDefaults.standard.set(onlineEnabled, forKey: Self.onlineKey) }
     }
+    /// Active verdict theme; persisted, defaults to Minimal.
+    @Published var theme: AppTheme {
+        didSet { UserDefaults.standard.set(theme.rawValue, forKey: Self.themeKey) }
+    }
 
     private static let onlineKey = "onlineLookupEnabled"
+    private static let themeKey = "appTheme"
     private var lookupTask: Task<Void, Never>?
 
     init() {
         db = BarcodeDatabase()
         onlineEnabled = UserDefaults.standard.bool(forKey: Self.onlineKey)
+        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .minimal
         #if DEBUG
         // Dev hook: `-demoBarcode <code>` runs a full scan (including the online
         // path when online lookup is enabled) for screenshots / manual testing.

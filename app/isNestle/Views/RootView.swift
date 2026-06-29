@@ -17,11 +17,11 @@ struct RootView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink {
-                        AboutView(db: model.db)
+                        SettingsView(model: model)
                     } label: {
-                        Image(systemName: "info.circle")
+                        Image(systemName: "gearshape")
                     }
-                    .accessibilityLabel("About and data sources")
+                    .accessibilityLabel("Settings")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -65,7 +65,7 @@ struct ScannerScreen: View {
                     .padding([.horizontal, .top])
 
                 // The rest of the screen: live result / instructions display.
-                ResultPanel(result: model.result, isLookingUp: model.isLookingUp)
+                ResultPanel(result: model.result, isLookingUp: model.isLookingUp, theme: model.theme)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // Persistent opt-in control for the online fallback.

@@ -39,6 +39,29 @@ struct OwnershipResult: Identifiable, Equatable {
     }
 }
 
+/// Verdict presentation theme (UI.md). The active theme is chosen in Settings;
+/// adding a new case is the only change needed to add a theme.
+enum AppTheme: String, CaseIterable, Identifiable {
+    case minimal
+    case informational
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .minimal: return "Minimal"
+        case .informational: return "Informational"
+        }
+    }
+
+    var blurb: String {
+        switch self {
+        case .minimal: return "Bold, color-flooded verdict — read it in a glance."
+        case .informational: return "Calm, detailed card with the full ownership chain."
+        }
+    }
+}
+
 /// A brand row returned from manual search.
 struct BrandHit: Identifiable, Equatable {
     var id: String { brandName }
