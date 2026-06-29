@@ -7,9 +7,11 @@
 - **App:** distributed through the **Apple App Store**, with **TestFlight** for
   beta builds. iPhone, iOS 16+. Requires an **Apple Developer Program membership
   ($99/yr)** — to be acquired (see `CONSTRAINTS.md`).
-- **No backend / no server / no accounts.** The app runs entirely on-device. The
-  only remote dependency is a static dataset file (below). Nothing else is hosted,
-  and no user data is ever transmitted (see `STACK.md` privacy notes).
+- **No backend of our own / no accounts.** We host only static files (the dataset
+  + manifest). Scans are answered on-device by default; the **opt-in online
+  fallback** (off by default) calls third-party lookup APIs (e.g. the free OFF API)
+  **directly from the app** — still no server of ours, and no user data stored
+  anywhere (see `STACK.md` privacy notes).
 
 ## CI/CD
 

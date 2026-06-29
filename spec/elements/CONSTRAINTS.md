@@ -14,13 +14,14 @@ Everything else runs on free tiers:
   repo.
 - GitHub Releases / GitHub Pages — free.
 - Xcode Cloud — free tier (25 compute hrs/mo); a solo app stays within it.
-- Open Food Facts / Wikidata data — free.
+- Open Food Facts (data dump + API) / Wikidata data — free.
 
 Optional, deferred: a custom domain (e.g., `isnestle.app`) ~$10–20/yr.
 
 **Hard rule:** do not introduce paid services, paid APIs, or anything that exceeds
-a free tier without asking. (Commercial UPC APIs are already out of scope — see
-`STACK.md`.)
+a free tier without asking. The opt-in online fallback uses the **free OFF API**;
+**commercial UPC APIs** (broader coverage) would break this budget and are
+**deferred until the budget is explicitly raised** (see `STACK.md` / `FEATURES.md`).
 
 ## Timeline
 
@@ -49,10 +50,14 @@ a free tier without asking. (Commercial UPC APIs are already out of scope — se
 No formal regulatory regime applies (no user data is collected — see `STACK.md`),
 but the following are deliberate requirements for an app of this kind:
 
-- **No data collection.** App Store privacy label = **"Data Not Collected."**
-  Provide an `NSCameraUsageDescription` explaining the camera is used only to scan
-  barcodes on-device. A privacy policy page (GitHub Pages) is required by the App
-  Store and states plainly that nothing is collected or transmitted.
+- **We collect no data; online is opt-in.** *We* operate no server and store
+  nothing. With the **opt-in online lookup** off (default), nothing about a scan
+  leaves the device. With it **on**, the scanned barcode (+ IP) is sent to a
+  third-party lookup API (e.g. OFF) — disclose this in-app and in the privacy
+  policy, and reflect any "data sent to third parties" accurately on the App Store
+  privacy label (we still "collect" nothing ourselves). Provide an
+  `NSCameraUsageDescription` (camera used only to scan barcodes on-device). The
+  privacy policy lives on GitHub Pages.
 - **Accuracy / defamation hygiene.** Ownership claims are factual assertions. Cite
   data sources (Open Food Facts, Wikidata) in-app and include a visible
   disclaimer that data may be incomplete or out of date. Verdicts should never be

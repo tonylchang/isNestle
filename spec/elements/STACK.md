@@ -17,7 +17,8 @@ Approved languages, frameworks, libraries, and tools.
 - **VisionKit `DataScannerViewController`** — first-party live barcode scanning
   (UPC-A / EAN-13). Falls back to **AVFoundation** (`AVCaptureMetadataOutput`)
   where a lower-level capture pipeline or wider device support is needed.
-- **Swift Concurrency (async/await)** — for the periodic dataset update fetch.
+- **Swift Concurrency (async/await)** — for the periodic dataset update fetch and
+  the opt-in online fallback request.
 
 ### Databases
 
@@ -34,15 +35,35 @@ Approved languages, frameworks, libraries, and tools.
   the minimal-dependency / privacy posture. **GRDB.swift** remains the documented
   fallback if the data layer grows beyond simple reads (it can be adopted in M2+).
 
-### Data Sources
+### Data Sources (multi-source aggregation)
+
+The pipeline blends multiple sources, split by license.
+
+**Bundle-able** (openly licensed → shipped offline):
 
 - **Open Food Facts** (barcode → brand). License: **ODbL** — accepted. Requires
   in-app attribution and publishing the derived SQLite under ODbL. See
   `CONSTRAINTS.md`.
+- **Open Beauty Facts / Open Products Facts** (ODbL) — cosmetics / household, to
+  close OFF's non-food gaps.
 - **Wikidata** (brand → parent company; Nestlé = entity `Q160746`). License:
   **CC0** — no obligations.
 - **Wikipedia** "List of Nestlé brands" + nestle.com/brands — supplemental brand
   curation (facts, not redistribution).
+- **Curated / crowdsourced corrections** (ours) — manual fixes for known gaps
+  (e.g. Purina / pet care, regional brands).
+
+**Online-only** (used at query time by the opt-in fallback, *never* bundled):
+
+- **Open Food Facts API** (free) — resolves barcodes not in the bundle against the
+  full ~4M-product DB. The v1 online-fallback source.
+- **Commercial UPC APIs** (Go-UPC, UPCitemdb, …) — broadest coverage (pet / non-food),
+  but **paid** and bundling-prohibited → **future, budget-gated** (see
+  `CONSTRAINTS.md`). Query-time only.
+
+> **ODbL note:** the *bundled* derived DB may combine the openly-licensed sources
+> above (published under ODbL). Commercial-API data must **never** be merged into
+> the bundled file — it is query-time only.
 
 ### Data Pipeline (build-time, off-device)
 
@@ -66,23 +87,28 @@ Technologies explicitly excluded from this project, with rationale.
 
 - **Android / cross-platform frameworks** (React Native, Flutter, Kotlin
   Multiplatform) — iOS-only product; native Swift is the deliberate choice.
-- **Commercial UPC/barcode APIs** (Go-UPC, UPCitemdb, Barcode Lookup, Nielsen) —
-  none permit offline bundling/redistribution, and pricing ($75–795/mo) breaks the
-  budget posture. Disqualified.
-- **Live barcode lookups on scan** — no per-scan network calls. The app is fully
-  offline at scan time; unknown barcodes resolve to "Unknown" + local brand search.
+- **Commercial UPC/barcode APIs as a *bundled* source** — they prohibit
+  redistribution and cost $75–795/mo. Out of scope for the offline bundle and for
+  v1; permitted only as a *future, budget-gated, query-time* fallback source (see
+  Data Sources).
+- **Mandatory / always-on online lookups** — the app must be fully usable offline.
+  Online is **opt-in, off by default**, and fires only on a bundle miss.
 - **Analytics / tracking / advertising SDKs** (Firebase Analytics, Facebook SDK,
-  Google Ads, crash-reporting that exfiltrates data) — banned. Zero user data
-  leaves the device. This is a core differentiator vs. existing boycott apps.
-- **Backend application server / user accounts** — none. The only remote
-  dependency is a static file (the dataset + version manifest) on a CDN.
+  Google Ads, crash-reporting that exfiltrates data) — banned. *We* collect no user
+  data. This is a core differentiator vs. existing boycott apps.
+- **Backend application server of our own / user accounts** — none. The bundled
+  dataset + version manifest are static files (GitHub Releases); the opt-in online
+  fallback calls third-party lookup APIs (e.g. OFF) **directly from the app**, so
+  there is still no server to run or store data on.
 
 ## Notes
 
-- **Privacy is architectural, not a setting.** The only network activity in the
-  entire app is fetching the dataset manifest and SQLite from a static host. No
-  scan, search, verdict, or history ever leaves the device. There is nothing to
-  collect because nothing is sent.
+- **Privacy is the default; online is opt-in.** With online lookup off (the
+  default), the only network activity is fetching the dataset manifest + SQLite
+  from a static host — no scan, search, or verdict leaves the device. With online
+  lookup **on**, an *unknown* barcode (+ IP) is sent to a third-party lookup API
+  (e.g. OFF), disclosed in-app and OS-permission-gated. Either way *we* run no
+  server and store nothing — no account, no telemetry.
 - **Brand-name normalization is the known hard part.** Open Food Facts
   `brands_tags` are machine-generated slugs with variants (e.g., `nestle`,
   `nestle-france`, `nestlé`). The pipeline needs prefix matching / a curated alias

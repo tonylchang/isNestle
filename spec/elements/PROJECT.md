@@ -31,11 +31,14 @@ no color-only verdicts).
 **Done when:** the app runs on the developer's phone and returns correct
 verdicts fully offline.
 
-### Milestone 2 — Self-Update + Polish (→ v1 / TestFlight)
-Automate the GitHub Actions daily pipeline → GitHub Releases; implement the in-app
-daily manifest check + dataset download/swap; add the **Informational** theme +
-settings (theme picker); add ODbL attribution + accuracy disclaimer; publish the
-privacy policy on GitHub Pages.
+### Milestone 2 — Self-Update + Polish + Coverage (→ v1 / TestFlight)
+Automate the GitHub Actions daily pipeline → GitHub Releases (multi-source: OFF +
+Open Beauty Facts + Wikidata + curated); implement the in-app daily manifest check
++ dataset download/swap; add the **opt-in online fallback** (off by default, free
+OFF API) so the app can cover **any** barcode and give confident "not Nestlé"
+verdicts; add the **Informational** theme + settings (theme picker, online-lookup
+toggle); add ODbL attribution + accuracy disclaimer; publish the privacy policy on
+GitHub Pages.
 **Done when:** a **TestFlight** build is installed and working on the developer's
 iPhone, updating its dataset daily — **this is the v1 goal.**
 

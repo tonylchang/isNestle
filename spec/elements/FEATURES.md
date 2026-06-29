@@ -11,17 +11,30 @@ Must-have for the first usable release:
 - **Ownership resolution** — map the scanned product → brand → parent company,
   and determine whether the parent is the active boycott target (Nestlé in v1).
 - **Clear verdict** — show an unambiguous result:
-  - ✅ **Yes** — made by Nestlé (or a subsidiary)
-  - ❌ **No** — not a Nestlé product
-  - ❓ **Unknown** — barcode not in the dataset
+  - ❌ **Nestlé** — made by Nestlé (or a subsidiary) → avoid
+  - ✅ **No Nestlé match** — not found in the Nestlé data → likely clear
+  - ❓ **Unknown** — only when online lookup is on and *no* source has the product
+
+  Offline, a non-match is shown as "No Nestlé match" with an honest hedge (coverage
+  isn't exhaustive). A *confident* "not Nestlé" requires the opt-in online lookup
+  (below), which can read the full product database.
 - **Explain the verdict** — show the ownership chain that produced the answer
   (product → brand → subsidiary → parent), so the result is transparent and
   trustworthy.
-- **Offline-first operation** — the brand/ownership dataset is bundled with the
-  app, so scanning and lookups work without a network connection.
+- **Offline-first operation** — the bundled dataset answers scans instantly with no
+  network. With online lookup off, the app is **fully offline**.
+- **Opt-in online lookup (coverage)** — *off by default.* Goal: cover **every
+  barcode**. When enabled, a barcode not in the bundle is resolved via an online
+  lookup, so the app can give a **confident "not Nestlé"** for any catalogued
+  product and catch Nestlé products missing from the bundle. v1 uses the **free
+  Open Food Facts API** (full ~4M-product DB); commercial UPC APIs for the
+  pet-food / non-food last mile are a **future, budget-gated** upgrade (see
+  `CONSTRAINTS.md`). When on, only the scanned barcode (+ IP) reaches the lookup
+  service — clearly disclosed; the app still runs no server of its own and stores
+  nothing.
 - **Periodic dataset update** — the app checks on a regular cadence for an updated
-  brand/ownership dataset and refreshes the local copy when the company/brand list
-  has changed. (The *only* part that needs the network.)
+  bundled dataset and refreshes the local copy (a whole-file download that reveals
+  nothing about what was scanned).
 - **Manual search fallback** — when a barcode isn't found (or the user prefers to
   type), let the user search by product or brand name to get a verdict.
 - **Data-driven target company** — the boycott target is defined by data, not
