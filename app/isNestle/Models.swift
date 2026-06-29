@@ -26,6 +26,7 @@ struct OwnershipResult: Identifiable, Equatable {
     let parent: String?        // e.g. "Nestlé"
     let verdict: Verdict
     var productName: String? = nil   // from the online fallback (OFF); local has none
+    var manufacturer: String? = nil  // brand owner / maker (esp. for non-target products)
     var fromOnline: Bool = false     // resolved via the opt-in online lookup
 
     var id: String { query }
@@ -33,9 +34,25 @@ struct OwnershipResult: Identifiable, Equatable {
     /// Best human label for the scanned item: product name if known, else brand.
     var displayName: String? { productName ?? brandName }
 
-    /// Ownership chain for display, most specific first (brand → parent).
+    /// Ownership chain for display, most specific first (brand → parent/maker).
+    /// For a target match this is brand → Nestlé; for a non-target product it's
+    /// brand → manufacturer when known.
     var chain: [String] {
-        [brandName, parent].compactMap { $0 }
+        [brandName, parent ?? manufacturer].compactMap { $0 }
+    }
+
+    /// Labeled fields for detailed themes (skips empties and obvious duplicates).
+    var fields: [(label: String, value: String)] {
+        var out: [(String, String)] = []
+        if let productName { out.append(("Product", productName)) }
+        if let brandName, brandName.caseInsensitiveCompare(productName ?? "") != .orderedSame {
+            out.append(("Brand", brandName))
+        }
+        if let parent { out.append(("Parent", parent)) }
+        else if let manufacturer, manufacturer.caseInsensitiveCompare(brandName ?? "") != .orderedSame {
+            out.append(("Maker", manufacturer))
+        }
+        return out
     }
 }
 
@@ -44,20 +61,26 @@ struct OwnershipResult: Identifiable, Equatable {
 enum AppTheme: String, CaseIterable, Identifiable {
     case minimal
     case informational
+    case receipt
+    case tag
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
         case .minimal: return "Minimal"
-        case .informational: return "Informational"
+        case .informational: return "Record"
+        case .receipt: return "Receipt"
+        case .tag: return "Tag"
         }
     }
 
     var blurb: String {
         switch self {
         case .minimal: return "Bold, color-flooded verdict — read it in a glance."
-        case .informational: return "Calm, detailed card with the full ownership chain."
+        case .informational: return "A calm, typographic ownership record."
+        case .receipt: return "A checkout receipt, printed in monospace."
+        case .tag: return "A shop price tag with the verdict as the price."
         }
     }
 }

@@ -37,25 +37,33 @@ The main screen is split so the camera and the result share it:
 
 ### Theme System (extensible)
 
-The verdict presentation is a **pluggable theme**, not hard-coded. v1 ships **two
-themes**, and the system must be built so additional themes can be added later
-without touching core logic (a theme is a view/style module fed the same verdict
-model).
+The verdict presentation is a **pluggable theme**, not hard-coded. v1 ships **four
+themes**, each a genuinely distinct design language, and the system is built so more
+can be added without touching core logic (a theme is a view/style module fed the
+same verdict model). Every theme must **fit without scrolling** in the display area
+and reinforce color with an icon + text (never color alone).
 
 - **Minimal** (shipped) — bold & instant. The display area is **color-flooded**
-  (red = Nestlé / green = no match) with a large icon, a one- or two-word headline
-  ("NESTLÉ" / "NO NESTLÉ MATCH" / "NOT NESTLÉ"), the scanned **product/brand name**,
-  the ownership chain (brand → parent), and a one-line explanation — readable in a
-  fraction of a second at the shelf. Rendered inline beneath the live camera (not a
-  full-screen takeover), so the user can keep scanning.
-- **Informational** (shipped) — a calm, typographic **"ownership record" dossier**,
-  a deliberately different design language from Minimal: no color flood; **serif**
-  content + **monospaced** labels; the verdict reduced to a small colour-coded
-  **stamp**; the scanned **GTIN** as the record reference; brand/parent as filed
-  fields separated by hairline rules — for users who want the "why."
+  (red = Nestlé / green = not) with a large icon, a one- or two-word headline,
+  the scanned **product/brand name**, the ownership chain, and a one-line
+  explanation — readable in a fraction of a second at the shelf.
+- **Record** (shipped, formerly "Informational") — a calm, typographic **"ownership
+  record" dossier**: no color flood; **serif** content + **monospaced** labels; the
+  verdict reduced to a small colour-coded **stamp**; the scanned **GTIN** as the
+  record reference; brand / parent / maker as filed fields with hairline rules.
+- **Receipt** (shipped) — a **checkout receipt** printed in monospace: store header,
+  dashed rules, label→value rows, an inverted **VERDICT** bar in the verdict color,
+  a faux barcode + GTIN, and a torn (zig-zag) bottom edge. Leans into the checkout
+  world.
+- **Tag** (shipped) — a **shop price tag** (sliced corner + punch hole) where the
+  verdict is rendered as the big "price" in rounded type, with the product as the
+  item and the brand/maker beneath.
+
+All themes show the **product, brand, and parent/maker** when known — including for
+**non-Nestlé** products resolved via the opt-in online lookup (see `FEATURES.md`).
 
 The user picks the active theme in **Settings** (gear icon). Themes share a single
-verdict data model (`ResultPanel` switches on `AppTheme`), so adding a third theme
+verdict data model (`ResultPanel` switches on `AppTheme`), so adding another theme
 is purely additive.
 
 ### Appearance

@@ -58,7 +58,7 @@ struct ScannerScreen: View {
             VStack(spacing: 0) {
                 // Camera viewfinder — the only region that scans.
                 BarcodeScannerView { code in model.handleScanned(code) }
-                    .frame(height: geo.size.height * 0.44)
+                    .frame(height: geo.size.height * 0.40)
                     .background(Color.black)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.quaternary))

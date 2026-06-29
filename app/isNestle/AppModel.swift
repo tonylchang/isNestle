@@ -90,11 +90,14 @@ final class AppModel: ObservableObject {
         if let match = db?.matchTargetBrand(slugs: hit.brandSlugs) {
             result = OwnershipResult(query: barcode, brandName: match.brandName, parent: match.parent,
                                      verdict: .match, productName: hit.productName, fromOnline: true)
-        } else if !hit.brandSlugs.isEmpty {
-            // OFF knows the product and its brand isn't a target → confident "not Nestlé".
-            let brand = hit.brandSlugs.first.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
+        } else if hit.brandsDisplay != nil || !hit.brandSlugs.isEmpty {
+            // OFF knows the product and its brand isn't a target → confident "not
+            // Nestlé", and we can show the real brand + maker.
+            let brand = hit.brandsDisplay
+                ?? hit.brandSlugs.first.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
             result = OwnershipResult(query: barcode, brandName: brand, parent: nil,
-                                     verdict: .notTarget, productName: hit.productName, fromOnline: true)
+                                     verdict: .notTarget, productName: hit.productName,
+                                     manufacturer: hit.owner, fromOnline: true)
         }
         // else: OFF doesn't have it either → leave the local "no match" result as-is.
     }

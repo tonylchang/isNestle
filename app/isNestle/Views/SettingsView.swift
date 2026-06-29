@@ -8,15 +8,17 @@ struct SettingsView: View {
     var body: some View {
         let counts = model.db?.counts() ?? (brands: 0, barcodes: 0)
         Form {
-            Section("Appearance") {
+            Section {
                 Picker("Verdict theme", selection: $model.theme) {
                     ForEach(AppTheme.allCases) { theme in
                         Text(theme.label).tag(theme)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.inline)
+            } header: {
+                Text("Verdict theme")
+            } footer: {
                 Text(model.theme.blurb)
-                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("Online lookup") {
