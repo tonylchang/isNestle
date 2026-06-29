@@ -28,6 +28,9 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "isNestle uses the camera only to scan product barcodes on your device. Nothing is recorded, stored, or sent anywhere."
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
+        # Only standard HTTPS (OS-provided) — declare encryption exemption so
+        # TestFlight/App Store skips the export-compliance prompt on every build.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
     scheme:
       testTargets:
         - isNestleTests
