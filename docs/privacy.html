@@ -1,117 +1,144 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-<x-dc>
-<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>isNestle — Privacy Policy</title>
+<meta name="theme-color" content="#eceae3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; }
-  ::selection { background:#c8ead5; }
+  :root{
+    --paper:#f5f3ec; --bg:#eceae3; --ink:#1a1814; --muted:#54504a;
+    --faint:#9a958a; --green:#2f8a55; --green-lt:#5fb37f;
+  }
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ margin:0; background:var(--bg); color:var(--ink); overflow-x:hidden;
+        font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;
+        -webkit-font-smoothing:antialiased; line-height:1.5; }
+  ::selection{ background:#c8ead5; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 22px; }
+  .mono{ font-family:'Space Mono',ui-monospace,Menlo,monospace; }
+
+  .nav{ padding:24px 0; }
+  .back{ display:inline-flex; align-items:center; gap:9px; text-decoration:none; }
+  .logo{ width:32px; height:32px; flex:none; border-radius:8px; background:var(--paper);
+         position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
+  .logo i{ position:absolute; }
+  .logo .bars{ left:7px; right:7px; top:7px; height:11px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px 3px,var(--ink) 3px 4px,transparent 4px 6px); }
+  .logo .ring{ left:10px; top:11px; width:13px; height:13px; border:2.5px solid var(--green);
+    border-radius:50%; background:rgba(245,243,236,.5); }
+  .logo .handle{ left:23px; top:23px; width:8px; height:3px; background:var(--green);
+    border-radius:2px; transform:rotate(45deg); transform-origin:left center; }
+  .back b{ font-weight:600; font-size:1.02rem; color:var(--muted); }
+  .back b span{ color:var(--green); }
+
+  .body{ padding:14px 0 96px; }
+  .stamp{ font-family:'Space Mono',monospace; font-weight:700; font-size:.7rem;
+          letter-spacing:.22em; color:var(--green); margin-bottom:20px; }
+  h1{ font-weight:700; font-size:clamp(2.4rem,11vw,3.75rem); line-height:1.02;
+      letter-spacing:-.035em; margin:0 0 28px; }
+  .tldr{ background:var(--ink); color:var(--paper); border-radius:18px;
+         padding:clamp(22px,5vw,30px); margin-bottom:48px; }
+  .tldr .k{ font-family:'Space Mono',monospace; font-weight:700; font-size:.68rem;
+            letter-spacing:.2em; color:var(--green-lt); margin-bottom:13px; }
+  .tldr p{ font-size:clamp(1.05rem,4.6vw,1.25rem); line-height:1.55; color:#d8d4cb;
+           margin:0; text-wrap:pretty; }
+
+  section{ margin-bottom:38px; }
+  h2{ font-weight:600; font-size:clamp(1.4rem,5.5vw,1.65rem); letter-spacing:-.02em; margin:0 0 12px; }
+  p{ font-size:1.05rem; line-height:1.65; color:var(--muted); margin:0; text-wrap:pretty; }
+  strong{ color:var(--ink); font-weight:700; }
+  a{ color:var(--green); text-decoration:none; border-bottom:1.5px solid rgba(47,138,85,.35); }
+
+  .parties{ display:grid; gap:1px; background:rgba(26,24,20,.1); border-radius:16px;
+            overflow:hidden; box-shadow:0 0 0 1px rgba(26,24,20,.1); margin-top:16px; }
+  .party{ background:var(--paper); padding:20px 22px; }
+  .party b{ display:block; font-size:1.05rem; margin-bottom:4px; }
+  .party span{ font-size:.98rem; color:var(--muted); }
+
+  .foot{ margin-top:56px; padding-top:24px; border-top:1px solid rgba(26,24,20,.12);
+         font-size:.86rem; color:var(--faint); line-height:1.6; }
 </style>
-</helmet>
+</head>
+<body>
 
-<div style="background:#eceae3; color:#1a1814; font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh;">
-
-  <!-- NAV -->
-  <div style="max-width:760px; margin:0 auto; padding:28px 40px;">
-    <a href="index.html" style="display:inline-flex; align-items:center; gap:10px; text-decoration:none;">
-      <div style="width:34px; height:34px; border-radius:8px; background:#f5f3ec; position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);">
-        <div style="position:absolute; left:7px; right:7px; top:7px; height:12px; background:repeating-linear-gradient(90deg,#1a1814 0 1px,transparent 1px 3px,#1a1814 3px 4px,transparent 4px 6px);"></div>
-        <div style="position:absolute; left:11px; top:12px; width:14px; height:14px; border:2.5px solid #2f8a55; border-radius:50%; background:rgba(245,243,236,.55);"></div>
-        <div style="position:absolute; left:25px; top:25px; width:8px; height:3.5px; background:#2f8a55; border-radius:2px; transform:rotate(45deg); transform-origin:left center;"></div>
-      </div>
-      <div style="font:600 17px/1 'Space Grotesk',sans-serif;"><span style="color:#2f8a55;">←</span> <span style="color:#54504a;">isNestle</span></div>
-    </a>
-  </div>
-
-  <!-- BODY -->
-  <div style="max-width:760px; margin:0 auto; padding:36px 40px 120px;">
-
-    <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#2f8a55; margin-bottom:22px;">LAST UPDATED · 28 JUNE 2026</div>
-    <h1 style="font:700 60px/1 'Space Grotesk',sans-serif; letter-spacing:-.035em; margin:0 0 36px;">Privacy Policy</h1>
-
-    <!-- TL;DR callout -->
-    <div style="background:#1a1814; color:#f5f3ec; border-radius:20px; padding:30px 32px; margin-bottom:56px;">
-      <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.2em; color:#5fb37f; margin-bottom:14px;">THE SHORT VERSION</div>
-      <p style="font:400 19px/1.55 'Space Grotesk',sans-serif; color:#d8d4cb; margin:0; text-wrap:pretty;">isNestle is built to collect nothing. There is no account, no analytics, no tracking, and no server run by us. By default the app works entirely offline and nothing about what you scan ever leaves your phone.</p>
-    </div>
-
-    <!-- sections -->
-    <div style="display:flex; flex-direction:column; gap:42px;">
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">What we collect</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;"><strong style="color:#1a1814; font-weight:700;">Nothing.</strong> We operate no servers and store none of your data. We do not use analytics, advertising, or tracking SDKs.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Camera</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">The camera is used solely to detect a barcode on your device, in real time. No photos or video are recorded, saved, or transmitted.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Scanning is offline by default</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">The app ships with a bundled product/ownership database, so scans are answered on your device. With the optional online lookup turned off (the default), no information about a scan leaves your phone.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Dataset updates</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">To keep its data current, the app may download an updated database file from a public, static host (GitHub Releases). This is a plain file download — it reveals nothing about what you have scanned or searched.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Optional online lookup (off by default)</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">You can turn on "Online lookup" to identify barcodes that aren't in the offline database. When (and only when) it is enabled, a scanned barcode that the app can't resolve locally is sent to <a href="https://world.openfoodfacts.org" style="color:#2f8a55; text-decoration:none; border-bottom:1.5px solid rgba(47,138,85,.35);">Open Food Facts</a> to look up the product. Only the barcode (and, inherent to any internet request, your device's IP address) is sent. We do not log or store it. Open Food Facts' own <a href="https://world.openfoodfacts.org/privacy" style="color:#2f8a55; text-decoration:none; border-bottom:1.5px solid rgba(47,138,85,.35);">privacy policy</a> applies to that request. You can turn the feature off at any time.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Stored on your device</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">Only your preferences (selected theme, online-lookup toggle) are saved locally on your device. They are never transmitted.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 16px;">Third parties</h2>
-        <div style="display:flex; flex-direction:column; gap:1px; background:rgba(26,24,20,.1); border-radius:16px; overflow:hidden; box-shadow:0 0 0 1px rgba(26,24,20,.1);">
-          <div style="background:#f5f3ec; padding:20px 24px;">
-            <div style="font:700 16px/1.4 'Space Grotesk',sans-serif; margin-bottom:4px;">Open Food Facts</div>
-            <div style="font:400 15px/1.55 'Space Grotesk',sans-serif; color:#54504a;">Only when you enable online lookup, as described above.</div>
-          </div>
-          <div style="background:#f5f3ec; padding:20px 24px;">
-            <div style="font:700 16px/1.4 'Space Grotesk',sans-serif; margin-bottom:4px;">Apple</div>
-            <div style="font:400 15px/1.55 'Space Grotesk',sans-serif; color:#54504a;">Distribution happens through the App Store / TestFlight; Apple's standard policies apply to the download itself.</div>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Children</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">isNestle does not knowingly collect any personal information from anyone, including children.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Changes</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">If this policy changes, the "Last updated" date above will change and the revised policy will be posted at this URL.</p>
-      </div>
-
-      <div>
-        <h2 style="font:600 26px/1.15 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Contact</h2>
-        <p style="font:400 17px/1.65 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">Questions or issues: <a href="https://github.com/tonylchang/isNestle" style="color:#2f8a55; text-decoration:none; border-bottom:1.5px solid rgba(47,138,85,.35);">github.com/tonylchang/isNestle</a>.</p>
-      </div>
-
-    </div>
-
-    <!-- FOOTER NOTE -->
-    <div style="margin-top:72px; padding-top:32px; border-top:1px solid rgba(26,24,20,.12); font:400 13px/1.65 'Space Grotesk',sans-serif; color:#9a958a; text-wrap:pretty;">Product data from Open Food Facts (ODbL). Brand ownership from Wikidata (CC0) and Wikipedia. isNestle is an independent project and is not affiliated with, endorsed by, or sponsored by Nestlé S.A.</div>
-
-  </div>
-
+<div class="wrap nav">
+  <a class="back" href="index.html">
+    <span class="logo"><i class="bars"></i><i class="ring"></i><i class="handle"></i></span>
+    <b><span>←</span> isNestle</b>
+  </a>
 </div>
-</x-dc>
+
+<main class="wrap body">
+  <div class="stamp">LAST UPDATED · 28 JUNE 2026</div>
+  <h1>Privacy Policy</h1>
+
+  <div class="tldr">
+    <div class="k">THE SHORT VERSION</div>
+    <p>isNestle is built to collect nothing. There is no account, no analytics, no tracking, and no server run by us. By default the app works entirely offline and nothing about what you scan ever leaves your phone.</p>
+  </div>
+
+  <section>
+    <h2>What we collect</h2>
+    <p><strong>Nothing.</strong> We operate no servers and store none of your data. We do not use analytics, advertising, or tracking SDKs.</p>
+  </section>
+
+  <section>
+    <h2>Camera</h2>
+    <p>The camera is used solely to detect a barcode on your device, in real time. No photos or video are recorded, saved, or transmitted.</p>
+  </section>
+
+  <section>
+    <h2>Scanning is offline by default</h2>
+    <p>The app ships with a bundled product/ownership database, so scans are answered on your device. With the optional online lookup turned off (the default), no information about a scan leaves your phone.</p>
+  </section>
+
+  <section>
+    <h2>Dataset updates</h2>
+    <p>To keep its data current, the app may download an updated database file from a public, static host (GitHub Releases). This is a plain file download — it reveals nothing about what you have scanned or searched.</p>
+  </section>
+
+  <section>
+    <h2>Optional online lookup (off by default)</h2>
+    <p>You can turn on “Online lookup” to identify barcodes that aren't in the offline database. When (and only when) it is enabled, a scanned barcode that the app can't resolve locally is sent to <a href="https://world.openfoodfacts.org">Open Food Facts</a> to look up the product. Only the barcode (and, inherent to any internet request, your device's IP address) is sent. We do not log or store it. Open Food Facts' own <a href="https://world.openfoodfacts.org/privacy">privacy policy</a> applies to that request. You can turn the feature off at any time.</p>
+  </section>
+
+  <section>
+    <h2>Stored on your device</h2>
+    <p>Only your preferences (selected theme, online-lookup toggle) are saved locally on your device. They are never transmitted.</p>
+  </section>
+
+  <section>
+    <h2>Third parties</h2>
+    <div class="parties">
+      <div class="party"><b>Open Food Facts</b><span>Only when you enable online lookup, as described above.</span></div>
+      <div class="party"><b>Apple</b><span>Distribution happens through the App Store / TestFlight; Apple's standard policies apply to the download itself.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Children</h2>
+    <p>isNestle does not knowingly collect any personal information from anyone, including children.</p>
+  </section>
+
+  <section>
+    <h2>Changes</h2>
+    <p>If this policy changes, the “Last updated” date above will change and the revised policy will be posted at this URL.</p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <p>Questions or issues: <a href="https://github.com/tonylchang/isNestle">github.com/tonylchang/isNestle</a>.</p>
+  </section>
+
+  <div class="foot">
+    Product data from Open Food Facts (ODbL). Brand ownership from Wikidata (CC0) and Wikipedia. isNestle is an independent project and is not affiliated with, endorsed by, or sponsored by Nestlé S.A.
+  </div>
+</main>
+
 </body>
 </html>

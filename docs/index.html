@@ -1,189 +1,269 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-<x-dc>
-<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>isNestle — scan a barcode, know if it's Nestlé</title>
+<meta name="description" content="An offline-first, privacy-first iPhone app that scans a product barcode and tells you whether it's made by Nestlé.">
+<meta name="theme-color" content="#eceae3">
+<meta property="og:title" content="isNestle">
+<meta property="og:description" content="Scan a barcode. Know if it's Nestlé. Fully offline.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; }
-  ::selection { background:#c8ead5; }
+  :root{
+    --paper:#f5f3ec; --bg:#eceae3; --bg2:#dfdcd3; --ink:#1a1814;
+    --muted:#54504a; --faint:#9a958a; --darkmuted:#b3aea4;
+    --green:#2f8a55; --green-lt:#5fb37f; --red:#e0392b;
+  }
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink); overflow-x:hidden;
+    font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+  }
+  ::selection{ background:#c8ead5; }
+  a{ color:var(--green); }
+  .mono{ font-family:'Space Mono',ui-monospace,Menlo,monospace; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 22px; }
+  .sec{ padding:clamp(56px,11vw,100px) 0; }
+  .eyebrow{
+    font-family:'Space Mono',monospace; font-weight:700;
+    font-size:.7rem; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--green); margin:0 0 22px;
+  }
+  h1{ font-weight:700; font-size:clamp(2.7rem,12vw,4.6rem); line-height:1.0;
+      letter-spacing:-.035em; margin:.35em 0 .35em; text-wrap:balance; }
+  h2{ font-weight:600; font-size:clamp(1.85rem,6.6vw,3.25rem); line-height:1.08;
+      letter-spacing:-.03em; margin:0 0 .7em; text-wrap:balance; }
+  p{ text-wrap:pretty; }
+  .lede{ font-size:clamp(1.08rem,4.6vw,1.3rem); line-height:1.55;
+         color:var(--muted); max-width:44ch; margin:0 0 32px; }
+
+  /* NAV */
+  .nav{ display:flex; align-items:center; justify-content:space-between;
+        padding:22px 0; gap:16px; }
+  .brand{ display:flex; align-items:center; gap:11px; text-decoration:none; color:var(--ink); }
+  .logo{ width:36px; height:36px; flex:none; border-radius:9px; background:var(--paper);
+         position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
+  .logo i{ position:absolute; }
+  .logo .bars{ left:8px; right:8px; top:8px; height:13px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px 3px,var(--ink) 3px 4px,transparent 4px 6px); }
+  .logo .ring{ left:11px; top:12px; width:15px; height:15px; border:2.5px solid var(--green);
+    border-radius:50%; background:rgba(245,243,236,.5); }
+  .logo .handle{ left:26px; top:26px; width:9px; height:3.5px; background:var(--green);
+    border-radius:2px; transform:rotate(45deg); transform-origin:left center; }
+  .brand b{ font-weight:600; font-size:1.18rem; letter-spacing:-.01em; }
+  .brand b span{ color:var(--green); }
+  .nav-links{ display:none; }
+  .btn{ display:inline-flex; align-items:center; gap:7px; text-decoration:none;
+        font-weight:600; font-size:.95rem; padding:11px 18px; border-radius:9px;
+        color:var(--paper); background:var(--ink); white-space:nowrap; }
+  .btn.ghost{ color:var(--ink); background:transparent; box-shadow:inset 0 0 0 1.5px rgba(26,24,20,.18); }
+
+  /* HERO */
+  .hero{ display:grid; grid-template-columns:1fr; gap:clamp(40px,9vw,60px);
+         align-items:center; padding:clamp(36px,7vw,64px) 0 clamp(60px,11vw,104px); }
+  .hero-meta{ font-family:'Space Mono',monospace; font-weight:700; font-size:.66rem;
+              letter-spacing:.12em; color:var(--faint); margin-top:6px; }
+  .cta-row{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .cta-row .btn{ padding:14px 22px; font-size:1rem; }
+  .mockwrap{ justify-self:center; }
+
+  /* phone mock — fully fluid (flex + %), scales with viewport */
+  .phone{ width:min(286px,80vw); aspect-ratio:300/612; background:var(--ink);
+          border-radius:13% / 6.4%; padding:3.4%;
+          box-shadow:0 40px 80px -26px rgba(26,24,20,.55); }
+  .screen{ width:100%; height:100%; background:var(--paper); position:relative;
+           border-radius:10.5% / 5.2%; overflow:hidden; display:flex; flex-direction:column; }
+  .notch{ position:absolute; top:3.2%; left:50%; transform:translateX(-50%);
+          width:32%; height:3.6%; background:var(--ink); border-radius:99px; z-index:3; }
+  .vf{ flex:0 0 46%; background:#15140f; position:relative; overflow:hidden; }
+  .vf .bars{ position:absolute; left:15%; right:15%; top:33%; height:30%;
+    background:repeating-linear-gradient(90deg,#f4f1ea 0 4%,transparent 4% 7%,#f4f1ea 7% 11%,transparent 11% 16%,#f4f1ea 16% 19%,transparent 19% 24%); }
+  .vf .c{ position:absolute; width:11%; height:11%; }
+  .vf .tl{ top:21%; left:11%; border-top:3px solid var(--green); border-left:3px solid var(--green); border-radius:4px 0 0 0; }
+  .vf .tr{ top:21%; right:11%; border-top:3px solid var(--green); border-right:3px solid var(--green); border-radius:0 4px 0 0; }
+  .vf .bl{ bottom:21%; left:11%; border-bottom:3px solid var(--green); border-left:3px solid var(--green); border-radius:0 0 0 4px; }
+  .vf .br{ bottom:21%; right:11%; border-bottom:3px solid var(--green); border-right:3px solid var(--green); border-radius:0 0 4px 0; }
+  .result{ flex:1; padding:7%; display:flex; flex-direction:column; gap:5%; }
+  .vcard{ border-radius:14px; padding:7% 7%; display:flex; align-items:center; gap:9px; }
+  .vcard.red{ background:var(--red); color:#fff; }
+  .vcard.white{ background:#fff; box-shadow:inset 0 0 0 1px rgba(0,0,0,.05); }
+  .badge{ width:clamp(28px,11%,40px); aspect-ratio:1; border-radius:50%; flex:none;
+          display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.95rem; }
+  .badge.r{ background:#fff; color:var(--red); }
+  .badge.g{ background:var(--green); color:#fff; }
+  .vcard .lbl{ font-family:'Space Mono',monospace; font-weight:700; font-size:.62rem; letter-spacing:.14em; }
+  .vcard.red .lbl{ opacity:.85; }
+  .vcard.white .lbl{ color:var(--green); }
+  .vcard .sub{ font-weight:600; font-size:.78rem; line-height:1.25; margin-top:3px; }
+  .vcard.white .sub{ color:var(--ink); }
+
+  /* dark section (WHY) */
+  .dark{ background:var(--ink); color:var(--paper); }
+  .dark .eyebrow{ color:var(--green-lt); }
+  .dark p{ color:var(--darkmuted); font-size:clamp(1.05rem,4.4vw,1.35rem); line-height:1.6; max-width:62ch; }
+
+  /* HOW cards */
+  .grid{ display:grid; grid-template-columns:1fr; gap:18px; }
+  .card{ background:var(--paper); border-radius:20px; padding:30px 26px;
+         box-shadow:inset 0 0 0 1px rgba(0,0,0,.05); }
+  .card .step{ font-family:'Space Mono',monospace; font-weight:700; font-size:.8rem;
+               color:var(--green); margin-bottom:26px; }
+  .card h3{ font-weight:600; font-size:1.4rem; letter-spacing:-.02em; margin:0 0 10px; }
+  .card p{ font-size:1rem; line-height:1.55; color:var(--muted); margin:0; }
+
+  /* PRIVACY tiles */
+  .privacy{ background:var(--bg2); }
+  .tiles{ display:grid; grid-template-columns:1fr; gap:1px;
+          background:rgba(26,24,20,.1); border-radius:16px; overflow:hidden;
+          box-shadow:0 0 0 1px rgba(26,24,20,.1); }
+  .tile{ background:#eceae3; padding:26px 24px; }
+  .tile .k{ font-family:'Space Mono',monospace; font-weight:700; font-size:.66rem;
+            letter-spacing:.16em; color:var(--faint); margin-bottom:12px; }
+  .tile .v{ font-weight:600; font-size:1.18rem; letter-spacing:-.01em; line-height:1.25; }
+  .more{ margin-top:24px; display:inline-block; font-weight:600; text-decoration:none; }
+
+  /* DATA stats */
+  .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(14px,4vw,28px); }
+  .stat{ border-top:2px solid var(--ink); padding-top:18px; }
+  .stat .n{ font-weight:700; font-size:clamp(1.9rem,9vw,4rem); letter-spacing:-.04em; line-height:1; }
+  .stat .l{ font-family:'Space Mono',monospace; font-weight:700; font-size:.62rem;
+            letter-spacing:.18em; color:var(--faint); margin-top:10px; }
+
+  /* FOOTER */
+  .foot{ background:var(--ink); color:var(--darkmuted); }
+  .foot-in{ display:flex; flex-direction:column; gap:20px; padding:48px 0; }
+  .foot p{ font-size:.86rem; line-height:1.6; margin:0; max-width:60ch; }
+  .foot-links{ display:flex; gap:24px; font-weight:600; }
+  .foot-links a{ color:var(--paper); text-decoration:none; }
+
+  @media (min-width:760px){
+    .wrap{ padding:0 40px; }
+    .nav-links{ display:flex; align-items:center; gap:28px; }
+    .nav-links a{ color:var(--muted); text-decoration:none; font-weight:500; font-size:.95rem; }
+    .grid{ grid-template-columns:repeat(3,1fr); gap:24px; }
+    .tiles{ grid-template-columns:repeat(2,1fr); }
+    .foot-in{ flex-direction:row; align-items:center; justify-content:space-between; }
+  }
+  @media (min-width:900px){
+    .hero{ grid-template-columns:1.05fr .95fr; }
+    .hero-copy{ order:0; } .mockwrap{ order:1; }
+    .tiles{ grid-template-columns:repeat(4,1fr); }
+  }
 </style>
-</helmet>
+</head>
+<body>
 
-<div style="background:#eceae3; color:#1a1814; font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden;">
-
-  <!-- ===== NAV ===== -->
-  <div style="max-width:1120px; margin:0 auto; padding:28px 40px; display:flex; align-items:center; justify-content:space-between;">
-    <div style="display:flex; align-items:center; gap:12px;">
-      <div style="width:38px; height:38px; border-radius:9px; background:#f5f3ec; position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);">
-        <div style="position:absolute; left:8px; right:8px; top:8px; height:14px; background:repeating-linear-gradient(90deg,#1a1814 0 1px,transparent 1px 3px,#1a1814 3px 4px,transparent 4px 6px);"></div>
-        <div style="position:absolute; left:12px; top:13px; width:16px; height:16px; border:2.5px solid #2f8a55; border-radius:50%; background:rgba(245,243,236,.55);"></div>
-        <div style="position:absolute; left:28px; top:28px; width:9px; height:4px; background:#2f8a55; border-radius:2px; transform:rotate(45deg); transform-origin:left center;"></div>
+<div class="wrap">
+  <nav class="nav">
+    <a class="brand" href="./">
+      <span class="logo"><i class="bars"></i><i class="ring"></i><i class="handle"></i></span>
+      <b><span>is</span>Nestlé</b>
+    </a>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#data">Data</a>
       </div>
-      <div style="font:600 19px/1 'Space Grotesk',sans-serif; letter-spacing:-.01em;"><span style="color:#2f8a55;">is</span><span style="font-weight:700;">Nestlé</span></div>
+      <a class="btn" href="https://github.com/tonylchang/isNestle">GitHub →</a>
     </div>
-    <div style="display:flex; align-items:center; gap:28px; font:500 14px/1 'Space Grotesk',sans-serif;">
-      <a href="#how" style="color:#54504a; text-decoration:none;">How it works</a>
-      <a href="#privacy" style="color:#54504a; text-decoration:none;">Privacy</a>
-      <a href="#data" style="color:#54504a; text-decoration:none;">Data</a>
-      <a href="https://github.com/tonylchang/isNestle" style="display:inline-flex; align-items:center; gap:7px; color:#f5f3ec; background:#1a1814; text-decoration:none; padding:9px 16px; border-radius:8px; font-weight:600;">GitHub →</a>
-    </div>
-  </div>
-
-  <!-- ===== HERO ===== -->
-  <div style="max-width:1120px; margin:0 auto; padding:60px 40px 100px; display:grid; grid-template-columns:1.05fr .95fr; gap:64px; align-items:center;">
-    <div>
-      <div style="display:inline-block; font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#2f8a55; margin-bottom:26px;">OWNERSHIP, AT A GLANCE</div>
-      <h1 style="font:700 72px/0.98 'Space Grotesk',sans-serif; letter-spacing:-.035em; margin:0 0 26px;">Is it<br>Nestlé?</h1>
-      <p style="font:400 19px/1.55 'Space Grotesk',sans-serif; color:#54504a; max-width:440px; margin:0 0 36px; text-wrap:pretty;">Scan a product barcode and know in an instant whether it's made by Nestlé — fully offline, with nothing tracked.</p>
-      <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
-        <a href="https://github.com/tonylchang/isNestle" style="display:inline-flex; align-items:center; gap:8px; color:#f5f3ec; background:#1a1814; text-decoration:none; padding:14px 24px; border-radius:10px; font:600 15px/1 'Space Grotesk',sans-serif;">View on GitHub →</a>
-        <a href="privacy.html" style="display:inline-flex; align-items:center; gap:8px; color:#1a1814; background:transparent; text-decoration:none; padding:14px 22px; border-radius:10px; font:600 15px/1 'Space Grotesk',sans-serif; box-shadow:inset 0 0 0 1.5px rgba(26,24,20,.18);">Privacy</a>
-      </div>
-      <div style="font:700 11px/1.6 'Space Mono',monospace; letter-spacing:.12em; color:#9a958a;">IPHONE · IOS 16+ · OPEN SOURCE (MIT) · TESTFLIGHT COMING SOON</div>
-    </div>
-
-    <!-- phone mock -->
-    <div style="display:flex; justify-content:center;">
-      <div style="width:300px; height:600px; border-radius:46px; background:#1a1814; padding:11px; box-sizing:border-box; box-shadow:0 40px 80px -24px rgba(26,24,20,.5); position:relative;">
-        <div style="width:100%; height:100%; border-radius:36px; background:#f5f3ec; overflow:hidden; position:relative; display:flex; flex-direction:column;">
-          <div style="position:absolute; top:14px; left:50%; transform:translateX(-50%); width:96px; height:26px; background:#1a1814; border-radius:14px; z-index:3;"></div>
-
-          <!-- viewfinder -->
-          <div style="height:288px; background:#15140f; position:relative; overflow:hidden; flex-shrink:0;">
-            <div style="position:absolute; left:44px; right:44px; top:96px; height:96px; background:repeating-linear-gradient(90deg,#f4f1ea 0 4px,transparent 4px 7px,#f4f1ea 7px 11px,transparent 11px 16px,#f4f1ea 16px 19px,transparent 19px 24px);"></div>
-            <div style="position:absolute; left:30px; top:60px; width:30px; height:30px; border-top:4px solid #2f8a55; border-left:4px solid #2f8a55; border-radius:5px 0 0 0;"></div>
-            <div style="position:absolute; right:30px; top:60px; width:30px; height:30px; border-top:4px solid #2f8a55; border-right:4px solid #2f8a55; border-radius:0 5px 0 0;"></div>
-            <div style="position:absolute; left:30px; bottom:60px; width:30px; height:30px; border-bottom:4px solid #2f8a55; border-left:4px solid #2f8a55; border-radius:0 0 0 5px;"></div>
-            <div style="position:absolute; right:30px; bottom:60px; width:30px; height:30px; border-bottom:4px solid #2f8a55; border-right:4px solid #2f8a55; border-radius:0 0 5px 0;"></div>
-          </div>
-
-          <!-- result NESTLE -->
-          <div style="flex:1; padding:22px 22px 0; display:flex; flex-direction:column; gap:14px;">
-            <div style="background:#e0392b; border-radius:18px; padding:20px; color:#fff; display:flex; align-items:center; gap:14px;">
-              <div style="width:42px; height:42px; flex-shrink:0; border-radius:50%; box-shadow:inset 0 0 0 4px #fff; position:relative;"><div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(45deg); width:34px; height:4px; background:#fff;"></div></div>
-              <div>
-                <div style="font:700 10px/1 'Space Mono',monospace; letter-spacing:.22em; opacity:.85; margin-bottom:6px;">NESTLÉ</div>
-                <div style="font:600 15px/1.3 'Space Grotesk',sans-serif;">KitKat → Nestlé</div>
-              </div>
-            </div>
-            <div style="font:400 12px/1.5 'Space Grotesk',sans-serif; color:#7a766c; padding:0 4px;">This product is made by Nestlé.</div>
-
-            <div style="background:#fff; border-radius:18px; padding:20px; display:flex; align-items:center; gap:14px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.05); margin-top:4px;">
-              <div style="width:42px; height:42px; flex-shrink:0; border-radius:50%; background:#2f8a55; position:relative;"><div style="position:absolute; left:14px; top:21px; width:9px; height:4px; background:#fff; border-radius:2px; transform:rotate(45deg); transform-origin:left;"></div><div style="position:absolute; left:18px; top:24px; width:16px; height:4px; background:#fff; border-radius:2px; transform:rotate(-50deg); transform-origin:left;"></div></div>
-              <div>
-                <div style="font:700 10px/1 'Space Mono',monospace; letter-spacing:.18em; color:#2f8a55; margin-bottom:6px;">NO NESTLÉ MATCH</div>
-                <div style="font:600 13px/1.3 'Space Grotesk',sans-serif; color:#1a1814;">Most likely fine.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== WHY ===== -->
-  <div style="background:#1a1814; color:#f5f3ec;">
-    <div style="max-width:1120px; margin:0 auto; padding:100px 40px;">
-      <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#5fb37f; margin-bottom:28px;">WHY IT EXISTS</div>
-      <h2 style="font:600 52px/1.08 'Space Grotesk',sans-serif; letter-spacing:-.03em; margin:0 0 28px; max-width:880px; text-wrap:balance;">Some brands hide who owns them.</h2>
-      <p style="font:400 21px/1.6 'Space Grotesk',sans-serif; color:#b3aea4; max-width:680px; margin:0; text-wrap:pretty;">Nestlé is a vast conglomerate, and many of its brands are marketed without any visible link to the parent company. If you're choosing where your money goes, that's hard to see at the shelf. isNestle makes it one scan.</p>
-    </div>
-  </div>
-
-  <!-- ===== HOW ===== -->
-  <div id="how" style="max-width:1120px; margin:0 auto; padding:100px 40px;">
-    <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#2f8a55; margin-bottom:28px;">HOW IT WORKS</div>
-    <h2 style="font:600 52px/1.08 'Space Grotesk',sans-serif; letter-spacing:-.03em; margin:0 0 64px; max-width:600px;">Three steps, on your device.</h2>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:28px;">
-
-      <div style="background:#f5f3ec; border-radius:22px; padding:36px 32px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);">
-        <div style="font:700 13px/1 'Space Mono',monospace; color:#2f8a55; margin-bottom:46px;">01</div>
-        <h3 style="font:600 26px/1.1 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Scan</h3>
-        <p style="font:400 16px/1.55 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">Point the camera at a barcode. Detection happens on-device — no photo is stored or sent.</p>
-      </div>
-
-      <div style="background:#f5f3ec; border-radius:22px; padding:36px 32px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);">
-        <div style="font:700 13px/1 'Space Mono',monospace; color:#2f8a55; margin-bottom:46px;">02</div>
-        <h3 style="font:600 26px/1.1 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Resolve</h3>
-        <p style="font:400 16px/1.55 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">A bundled database maps barcode → brand → parent company, instantly and offline.</p>
-      </div>
-
-      <div style="background:#f5f3ec; border-radius:22px; padding:36px 32px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);">
-        <div style="font:700 13px/1 'Space Mono',monospace; color:#2f8a55; margin-bottom:46px;">03</div>
-        <h3 style="font:600 26px/1.1 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 12px;">Decide</h3>
-        <p style="font:400 16px/1.55 'Space Grotesk',sans-serif; color:#54504a; margin:0; text-wrap:pretty;">A clear verdict with the ownership chain — read it in a glance or study the full record.</p>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ===== PRIVACY ===== -->
-  <div id="privacy" style="background:#dfdcd3;">
-    <div style="max-width:1120px; margin:0 auto; padding:100px 40px;">
-      <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#2f8a55; margin-bottom:28px;">PRIVATE BY DEFAULT</div>
-      <h2 style="font:600 52px/1.08 'Space Grotesk',sans-serif; letter-spacing:-.03em; margin:0 0 64px; max-width:760px; text-wrap:balance;">Nothing about your scan leaves your phone.</h2>
-      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(26,24,20,.1); border-radius:18px; overflow:hidden; box-shadow:0 0 0 1px rgba(26,24,20,.1);">
-        <div style="background:#eceae3; padding:32px 26px;">
-          <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.16em; color:#9a958a; margin-bottom:14px;">ACCOUNTS</div>
-          <div style="font:600 20px/1.25 'Space Grotesk',sans-serif; letter-spacing:-.01em;">None. No sign-up, ever.</div>
-        </div>
-        <div style="background:#eceae3; padding:32px 26px;">
-          <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.16em; color:#9a958a; margin-bottom:14px;">TRACKING</div>
-          <div style="font:600 20px/1.25 'Space Grotesk',sans-serif; letter-spacing:-.01em;">No analytics, no ads, no SDKs.</div>
-        </div>
-        <div style="background:#eceae3; padding:32px 26px;">
-          <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.16em; color:#9a958a; margin-bottom:14px;">SCANNING</div>
-          <div style="font:600 20px/1.25 'Space Grotesk',sans-serif; letter-spacing:-.01em;">Answered on-device from bundled data.</div>
-        </div>
-        <div style="background:#eceae3; padding:32px 26px;">
-          <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.16em; color:#9a958a; margin-bottom:14px;">ONLINE LOOKUP</div>
-          <div style="font:600 20px/1.25 'Space Grotesk',sans-serif; letter-spacing:-.01em;">Off by default. Opt-in, unknowns only.</div>
-        </div>
-      </div>
-      <div style="margin-top:28px;"><a href="privacy.html" style="font:600 15px/1 'Space Grotesk',sans-serif; color:#2f8a55; text-decoration:none;">Full privacy policy →</a></div>
-    </div>
-  </div>
-
-  <!-- ===== DATA ===== -->
-  <div id="data" style="max-width:1120px; margin:0 auto; padding:100px 40px;">
-    <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.26em; color:#2f8a55; margin-bottom:28px;">THE DATA</div>
-    <h2 style="font:600 52px/1.08 'Space Grotesk',sans-serif; letter-spacing:-.03em; margin:0 0 28px; max-width:600px;">Open data, openly built.</h2>
-    <p style="font:400 19px/1.6 'Space Grotesk',sans-serif; color:#54504a; max-width:680px; margin:0 0 56px; text-wrap:pretty;">Assembled from Open Food Facts (ODbL), Wikidata (CC0), and Wikipedia, with curated corrections. The pipeline and its findings are in the repo.</p>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:28px;">
-      <div style="border-top:2px solid #1a1814; padding-top:22px;">
-        <div style="font:700 64px/1 'Space Grotesk',sans-serif; letter-spacing:-.04em;">601</div>
-        <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.2em; color:#9a958a; margin-top:12px;">BRANDS</div>
-      </div>
-      <div style="border-top:2px solid #1a1814; padding-top:22px;">
-        <div style="font:700 64px/1 'Space Grotesk',sans-serif; letter-spacing:-.04em;">33,275</div>
-        <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.2em; color:#9a958a; margin-top:12px;">BARCODES</div>
-      </div>
-      <div style="border-top:2px solid #1a1814; padding-top:22px;">
-        <div style="font:700 64px/1 'Space Grotesk',sans-serif; letter-spacing:-.04em;">~3 MB</div>
-        <div style="font:700 11px/1 'Space Mono',monospace; letter-spacing:.2em; color:#9a958a; margin-top:12px;">OFFLINE DB</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== FOOTER ===== -->
-  <div style="background:#1a1814; color:#b3aea4;">
-    <div style="max-width:1120px; margin:0 auto; padding:56px 40px; display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between;">
-      <div style="font:400 13px/1.6 'Space Grotesk',sans-serif; max-width:560px; text-wrap:pretty;">isNestle is an independent project and is not affiliated with, endorsed by, or sponsored by Nestlé S.A. Product data: Open Food Facts (ODbL) · Brand ownership: Wikidata (CC0), Wikipedia.</div>
-      <div style="display:flex; gap:24px; font:600 14px/1 'Space Grotesk',sans-serif;">
-        <a href="https://github.com/tonylchang/isNestle" style="color:#f5f3ec; text-decoration:none;">Source</a>
-        <a href="privacy.html" style="color:#f5f3ec; text-decoration:none;">Privacy</a>
-      </div>
-    </div>
-  </div>
-
+  </nav>
 </div>
-</x-dc>
+
+<header class="wrap hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Ownership, at a glance</p>
+    <h1>Is it Nestlé?</h1>
+    <p class="lede">Scan a product barcode and know in an instant whether it's made by Nestlé — fully offline, with nothing tracked.</p>
+    <div class="cta-row">
+      <a class="btn" href="https://github.com/tonylchang/isNestle">View on GitHub →</a>
+      <a class="btn ghost" href="privacy.html">Privacy</a>
+    </div>
+    <div class="hero-meta">IPHONE · IOS 16+ · OPEN SOURCE (MIT) · TESTFLIGHT</div>
+  </div>
+
+  <div class="mockwrap" aria-hidden="true">
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="vf">
+        <div class="bars"></div>
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+      </div>
+      <div class="result">
+        <div class="vcard red">
+          <span class="badge r">✕</span>
+          <div><div class="lbl">NESTLÉ</div><div class="sub">KitKat → Nestlé</div></div>
+        </div>
+        <div class="vcard white">
+          <span class="badge g">✓</span>
+          <div><div class="lbl">NO NESTLÉ MATCH</div><div class="sub">Most likely fine.</div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</header>
+
+<section class="dark">
+  <div class="wrap sec">
+    <p class="eyebrow">Why it exists</p>
+    <h2>Some brands hide who owns them.</h2>
+    <p>Nestlé is a vast conglomerate, and many of its brands are marketed without any visible link to the parent company. If you're choosing where your money goes, that's hard to see at the shelf. isNestle makes it one scan.</p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap sec">
+    <p class="eyebrow">How it works</p>
+    <h2>Three steps, on your device.</h2>
+    <div class="grid">
+      <div class="card"><div class="step">01</div><h3>Scan</h3><p>Point the camera at a barcode. Detection happens on-device — no photo is stored or sent.</p></div>
+      <div class="card"><div class="step">02</div><h3>Resolve</h3><p>A bundled database maps barcode → brand → parent company, instantly and offline.</p></div>
+      <div class="card"><div class="step">03</div><h3>Decide</h3><p>A clear verdict with the ownership chain — read it in a glance or study the full record.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy" class="privacy">
+  <div class="wrap sec">
+    <p class="eyebrow">Private by default</p>
+    <h2>Nothing about your scan leaves your phone.</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">ACCOUNTS</div><div class="v">None. No sign-up, ever.</div></div>
+      <div class="tile"><div class="k">TRACKING</div><div class="v">No analytics, no ads, no SDKs.</div></div>
+      <div class="tile"><div class="k">SCANNING</div><div class="v">Answered on-device from bundled data.</div></div>
+      <div class="tile"><div class="k">ONLINE LOOKUP</div><div class="v">Off by default. Opt-in, unknowns only.</div></div>
+    </div>
+    <a class="more" href="privacy.html">Full privacy policy →</a>
+  </div>
+</section>
+
+<section id="data">
+  <div class="wrap sec">
+    <p class="eyebrow">The data</p>
+    <h2>Open data, openly built.</h2>
+    <p class="lede" style="max-width:62ch">Assembled from Open Food Facts (ODbL), Wikidata (CC0), and Wikipedia, with curated corrections. The pipeline and its findings are in the repo.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">601</div><div class="l">BRANDS</div></div>
+      <div class="stat"><div class="n">33,275</div><div class="l">BARCODES</div></div>
+      <div class="stat"><div class="n">~3 MB</div><div class="l">OFFLINE DB</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p>isNestle is an independent project and is not affiliated with, endorsed by, or sponsored by Nestlé S.A. Product data: Open Food Facts (ODbL) · Brand ownership: Wikidata (CC0), Wikipedia.</p>
+    <div class="foot-links">
+      <a href="https://github.com/tonylchang/isNestle">Source</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>
