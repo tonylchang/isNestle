@@ -110,3 +110,83 @@ private struct VerdictStyle {
         return parts.joined(separator: " ")
     }
 }
+
+// MARK: - Inline display panel (camera-rectangle layout)
+
+/// Fills the area below the viewfinder: the latest verdict inline, or idle
+/// instructions when nothing has been scanned yet.
+struct ResultPanel: View {
+    let result: OwnershipResult?
+    let onClear: () -> Void
+
+    var body: some View {
+        if let result {
+            VerdictPanel(result: result, onClear: onClear)
+        } else {
+            IdlePanel()
+        }
+    }
+}
+
+private struct IdlePanel: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: "viewfinder")
+                .font(.system(size: 44)).foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Text("Center a barcode in the frame")
+                .font(.headline)
+            Text("You’ll see instantly whether it’s made by \(Target.name).")
+                .font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+            Text("Product data: Open Food Facts (ODbL)")
+                .font(.caption2).foregroundStyle(.tertiary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Bold, color-flooded inline verdict — keeps the Minimal theme's instant read,
+/// now in the display area beneath the live camera (color always paired with an
+/// icon + text, never color alone).
+private struct VerdictPanel: View {
+    let result: OwnershipResult
+    let onClear: () -> Void
+    private var style: VerdictStyle { VerdictStyle(result.verdict) }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 8)
+            Image(systemName: style.symbol)
+                .font(.system(size: 54, weight: .bold))
+                .foregroundStyle(.white)
+                .accessibilityHidden(true)
+            Text(style.headline)
+                .font(.system(size: 34, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+            if !result.chain.isEmpty {
+                Text(result.chain.joined(separator: "  →  "))
+                    .font(.headline)
+                    .foregroundStyle(.white.opacity(0.95))
+                    .multilineTextAlignment(.center)
+            }
+            Text(style.detail(result))
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.9))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            Spacer(minLength: 8)
+            Text("Point at another barcode to scan again")
+                .font(.caption).foregroundStyle(.white.opacity(0.85))
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(style.color)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(style.accessibilityLabel(result))
+    }
+}

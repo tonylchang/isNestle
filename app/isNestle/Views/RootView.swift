@@ -54,12 +54,21 @@ struct ScannerScreen: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        BarcodeScannerView(isScanning: model.isScanning) { code in
-            model.handleScanned(code)
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                // Camera viewfinder — the only region that scans.
+                BarcodeScannerView { code in model.handleScanned(code) }
+                    .frame(height: geo.size.height * 0.46)
+                    .background(Color.black)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.quaternary))
+                    .padding([.horizontal, .top])
+
+                // The rest of the screen: live result / instructions display.
+                ResultPanel(result: model.result, onClear: model.clear)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
-        .ignoresSafeArea(edges: .bottom)
-        .fullScreenCover(item: $model.result, onDismiss: { model.resume() }) { result in
-            VerdictView(result: result) { model.resume() }
-        }
+        .background(Color(.systemBackground))
     }
 }

@@ -1,20 +1,20 @@
 import SwiftUI
 
-/// Holds the read-only database and the current scan result.
+/// Holds the read-only database and the latest scan result.
+///
+/// Scanning is continuous: the camera stays live in the viewfinder and `result`
+/// updates as new barcodes come into view, shown inline in the display area.
 @MainActor
 final class AppModel: ObservableObject {
     let db: BarcodeDatabase?
 
-    /// The latest verdict to present. `nil` means we're actively scanning.
+    /// The latest scan result, shown in the display area. `nil` = nothing yet.
     @Published var result: OwnershipResult?
-
-    var isScanning: Bool { result == nil }
 
     init() {
         db = BarcodeDatabase()
         #if DEBUG
-        // Dev hook: `-demoBarcode <code>` pre-loads a verdict so the verdict
-        // screen can be exercised/screenshotted in the simulator (no camera).
+        // Dev hook: `-demoBarcode <code>` pre-loads a verdict for screenshots.
         if let i = CommandLine.arguments.firstIndex(of: "-demoBarcode"),
            i + 1 < CommandLine.arguments.count, let db {
             result = db.lookup(barcode: CommandLine.arguments[i + 1])
@@ -23,12 +23,9 @@ final class AppModel: ObservableObject {
     }
 
     func handleScanned(_ barcode: String) {
-        guard result == nil, let db else { return }   // ignore repeats while a result is shown
+        guard let db else { return }
         result = db.lookup(barcode: barcode)
     }
 
-    /// Dismiss the current result and resume scanning.
-    func resume() {
-        result = nil
-    }
+    func clear() { result = nil }
 }
