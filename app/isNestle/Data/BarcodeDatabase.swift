@@ -13,10 +13,10 @@ final class BarcodeDatabase {
     /// have to keep Swift string buffers alive past the bind call.
     private static let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
-    init?(bundle: Bundle = .main) {
-        guard let url = bundle.url(forResource: "isnestle", withExtension: "sqlite") else {
-            return nil
-        }
+    /// Opens the active dataset (a self-updated copy if present, else the bundled
+    /// one — resolved by `DatasetStore`). Pass an explicit URL to override.
+    init?(url: URL? = DatasetStore.activeDatabaseURL) {
+        guard let url else { return nil }
         guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
             sqlite3_close(db)
             db = nil

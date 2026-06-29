@@ -48,4 +48,20 @@ final class LookupTests: XCTestCase {
         XCTAssertGreaterThan(c.brands, 100)
         XCTAssertGreaterThan(c.barcodes, 1000)
     }
+
+    func testBundledManifestLoads() throws {
+        let m = try XCTUnwrap(DatasetStore.bundledManifest, "dataset_manifest.json should be bundled")
+        XCTAssertFalse(m.version.isEmpty)
+        XCTAssertGreaterThan(m.sqlite_bytes, 0)
+        XCTAssertEqual(m.sqlite_sha256.count, 64)
+    }
+
+    func testManifestVersionComparison() {
+        func m(_ v: String) -> DatasetManifest {
+            DatasetManifest(version: v, sqlite_url: "", sqlite_sha256: "", sqlite_bytes: 1, brands: 1, barcodes: 1)
+        }
+        XCTAssertTrue(m("2026.07.01").isNewer(than: m("2026.06.28")))
+        XCTAssertFalse(m("2026.06.28").isNewer(than: m("2026.06.28")))
+        XCTAssertFalse(m("2026.06.27").isNewer(than: m("2026.06.28")))
+    }
 }

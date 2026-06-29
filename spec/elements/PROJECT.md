@@ -39,6 +39,12 @@ OFF API) so the app can cover **any** barcode and give confident "not Nestlé"
 verdicts; add the **Informational** theme + settings (theme picker, online-lookup
 toggle); add ODbL attribution + accuracy disclaimer; publish the privacy policy on
 GitHub Pages.
+Progress: ✅ daily GitHub Actions pipeline → rolling `dataset-latest` release;
+✅ in-app daily manifest check + verified download/atomic swap; ✅ opt-in online
+fallback; ✅ Minimal + Informational themes + Settings; ✅ ODbL attribution +
+disclaimer; ✅ privacy policy live on GitHub Pages. Remaining: **TestFlight**
+(blocked on the paid Apple account leaving "Pending").
+
 **Done when:** a **TestFlight** build is installed and working on the developer's
 iPhone, updating its dataset daily — **this is the v1 goal.**
 

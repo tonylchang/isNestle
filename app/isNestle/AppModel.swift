@@ -6,14 +6,24 @@ import SwiftUI
 /// updates as new barcodes come into view, shown inline in the display area.
 /// When **online lookup** is enabled, a barcode not in the bundle is resolved via
 /// the free Open Food Facts API (off by default; see `OnlineLookup`).
+enum DatasetUpdateState: Equatable {
+    case idle, checking, upToDate, updated(String), failed(String)
+}
+
 @MainActor
 final class AppModel: ObservableObject {
-    let db: BarcodeDatabase?
+    /// Reopened after a dataset self-update, so it's a var (not let).
+    private(set) var db: BarcodeDatabase?
 
     /// The latest scan result, shown in the display area. `nil` = nothing yet.
     @Published var result: OwnershipResult?
     /// True while an online lookup is in flight (shows a "checking…" hint).
     @Published var isLookingUp = false
+    /// Self-update status (shown in Settings).
+    @Published var updateState: DatasetUpdateState = .idle
+
+    /// Active dataset version (CalVer), for display.
+    var datasetVersion: String { DatasetStore.activeManifest?.version ?? "unknown" }
     /// Opt-in online fallback; persisted, off by default.
     @Published var onlineEnabled: Bool {
         didSet { UserDefaults.standard.set(onlineEnabled, forKey: Self.onlineKey) }
@@ -39,6 +49,22 @@ final class AppModel: ObservableObject {
             handleScanned(CommandLine.arguments[i + 1])
         }
         #endif
+        Task { await checkForDatasetUpdate() }   // daily self-update on launch
+    }
+
+    /// Check the rolling release for a newer dataset; reopen the DB if installed.
+    func checkForDatasetUpdate() async {
+        guard updateState != .checking else { return }
+        updateState = .checking
+        switch await DatasetUpdater.checkAndUpdate() {
+        case .upToDate:
+            updateState = .upToDate
+        case .updated(let m):
+            db = BarcodeDatabase()             // reopen the freshly installed file
+            updateState = .updated(m.version)
+        case .failed(let why):
+            updateState = .failed(why)
+        }
     }
 
     func handleScanned(_ barcode: String) {

@@ -26,10 +26,21 @@ struct SettingsView: View {
             }
 
             Section("Data") {
+                LabeledContent("Dataset version", value: model.datasetVersion)
                 LabeledContent("Brands", value: "\(counts.brands)")
                 LabeledContent("Barcodes", value: "\(counts.barcodes)")
+                Button {
+                    Task { await model.checkForDatasetUpdate() }
+                } label: {
+                    HStack {
+                        Text("Check for updates")
+                        Spacer()
+                        updateStatus
+                    }
+                }
+                .disabled(model.updateState == .checking)
                 Link("Privacy policy", destination: Self.privacyURL)
-                Text("Product data: Open Food Facts (ODbL). Brand ownership: Wikidata (CC0), Wikipedia.")
+                Text("The dataset updates itself from a public file — nothing about your scans is sent. Product data: Open Food Facts (ODbL). Brand ownership: Wikidata (CC0), Wikipedia.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -40,5 +51,22 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch model.updateState {
+        case .idle:
+            EmptyView()
+        case .checking:
+            ProgressView()
+        case .upToDate:
+            Text("Up to date").font(.caption).foregroundStyle(.secondary)
+        case .updated(let v):
+            Label("Updated to \(v)", systemImage: "checkmark.circle.fill")
+                .font(.caption).foregroundStyle(.green).labelStyle(.titleAndIcon)
+        case .failed(let why):
+            Text(why).font(.caption).foregroundStyle(.secondary)
+        }
     }
 }

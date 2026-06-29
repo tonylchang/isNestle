@@ -1,0 +1,60 @@
+name: Build & publish dataset
+
+# Rebuilds the isNestle dataset daily and publishes it to a rolling
+# `dataset-latest` GitHub Release (SQLite + manifest.json). The app checks the
+# manifest and self-updates. See INFRA.md / VERSIONING.md.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"        # daily, 06:17 UTC
+  workflow_dispatch:            # allow manual runs
+
+permissions:
+  contents: write               # create/update the release
+
+concurrency:
+  group: dataset
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build dataset (brands -> barcodes -> sqlite)
+        working-directory: data-pipeline
+        run: |
+          python3 build_brands.py
+          python3 build_barcodes.py
+          python3 build_db.py
+
+      - name: Build manifest
+        working-directory: data-pipeline
+        run: python3 build_manifest.py --version "$(date -u +%Y.%m.%d)"
+
+      - name: Summarize
+        working-directory: data-pipeline
+        run: |
+          echo "### Dataset built" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat out/manifest.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish to rolling release
+        working-directory: data-pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(date -u +%Y.%m.%d)"
+          # Ensure the rolling release exists (ignore "already exists").
+          gh release create dataset-latest \
+            --title "Dataset (latest)" \
+            --notes "Rolling isNestle dataset. Current version: $VERSION. Derived data under ODbL (Open Food Facts); brand ownership CC0 (Wikidata)." \
+            || true
+          gh release upload dataset-latest \
+            out/isnestle.sqlite out/manifest.json --clobber

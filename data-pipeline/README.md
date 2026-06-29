@@ -41,8 +41,17 @@ Both halves of the pipeline import `common.py` so they cannot drift:
 python3 build_brands.py      # -> out/brands.csv
 python3 build_barcodes.py    # reads out/brands.csv -> out/barcodes.csv
 python3 build_db.py          # -> out/isnestle.sqlite
+python3 build_manifest.py    # -> out/manifest.json (version, sha256, counts)
 python3 test_spike.py        # asserts the spike's done-criterion
 ```
 
-Stdlib only (Python 3.14): `urllib`, `json`, `csv`, `sqlite3`. No pip installs.
-`out/` is gitignored (regenerate by re-running).
+Stdlib only (Python 3.14): `urllib`, `json`, `csv`, `sqlite3`, `hashlib`. No pip
+installs. `out/` is gitignored (regenerate by re-running).
+
+## Daily publication
+
+`.github/workflows/dataset.yml` runs this pipeline daily on GitHub Actions and
+publishes `isnestle.sqlite` + `manifest.json` to the rolling **`dataset-latest`**
+GitHub Release. The app checks `manifest.json` and self-updates (see
+`app/isNestle/Data/DatasetUpdater.swift`). The app also bundles a baseline
+`dataset_manifest.json` (copy of a `manifest.json`) as its install-time version.
