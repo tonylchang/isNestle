@@ -3,91 +3,162 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>isNestle — Privacy Policy</title>
+  <title>isNestle — scan a barcode, know if it's Nestlé</title>
+  <meta name="description" content="An offline-first, privacy-first iOS app that scans a product barcode and tells you whether it's made by Nestlé.">
+  <meta property="og:title" content="isNestle">
+  <meta property="og:description" content="Scan a barcode. Know if it's Nestlé. Fully offline.">
   <style>
-    :root { color-scheme: light dark; }
-    body {
-      font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem;
-      color: #1c1c1e; background: #fff;
+    :root{
+      --ink:#15110f; --paper:#faf7f2; --muted:#6f6760; --line:#e2dcd2;
+      --nestle:#c7261d; --clear:#1f7a3d; --card:#fff;
     }
-    @media (prefers-color-scheme: dark) { body { color: #e6e6e6; background: #111; } }
-    h1 { font-size: 2rem; margin-bottom: .25rem; }
-    h2 { font-size: 1.25rem; margin-top: 2rem; }
-    .updated { color: #888; font-size: .95rem; margin-top: 0; }
-    .tldr { background: rgba(127,127,127,.12); border-radius: 12px; padding: 1rem 1.25rem; }
-    a { color: #0a7d2e; }
-    code { background: rgba(127,127,127,.15); padding: .1em .35em; border-radius: 5px; }
-    footer { margin-top: 3rem; color: #888; font-size: .9rem; }
+    @media (prefers-color-scheme: dark){
+      :root{ --ink:#f2ede7; --paper:#141210; --muted:#a59c92; --line:#2c2723; --card:#1d1a17; }
+    }
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0; color:var(--ink); background:var(--paper);
+      font:18px/1.65 ui-serif,Georgia,"Times New Roman",serif;
+      -webkit-font-smoothing:antialiased;
+    }
+    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .wrap{ max-width:880px; margin:0 auto; padding:0 1.5rem; }
+    .eyebrow{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
+
+    /* Hero */
+    header{ padding:5rem 0 3.5rem; border-bottom:1px solid var(--line); }
+    .stamp{ display:inline-block; width:16px; height:16px; border-radius:3px;
+      background:var(--nestle); vertical-align:middle; margin-right:.5rem; }
+    h1{ font-size:clamp(2.6rem,8vw,4.6rem); line-height:1.04; margin:.6rem 0 0;
+      font-weight:600; letter-spacing:-.02em; }
+    .lede{ font-size:1.3rem; color:var(--muted); max-width:36ch; margin:1.2rem 0 2rem; }
+    .cta{ display:inline-flex; align-items:center; gap:.5rem;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.85rem;
+      letter-spacing:.04em; text-decoration:none; color:var(--paper); background:var(--ink);
+      padding:.8rem 1.3rem; border-radius:8px; }
+    .cta.ghost{ color:var(--ink); background:transparent; border:1px solid var(--line); }
+    .ctas{ display:flex; gap:.75rem; flex-wrap:wrap; }
+    .note{ margin-top:1rem; font-size:.95rem; color:var(--muted); }
+
+    /* Verdict demo */
+    .demo{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:3rem 0; }
+    @media (max-width:620px){ .demo{ grid-template-columns:1fr; } }
+    .verdict{ border-radius:16px; padding:1.6rem; color:#fff; }
+    .verdict.no{ background:var(--nestle); }
+    .verdict.yes{ background:var(--clear); }
+    .verdict .face{ font-size:1.9rem; font-weight:700; margin:.3rem 0 .2rem; }
+    .verdict .sub{ opacity:.92; font-size:.98rem; }
+    .verdict .ico{ font-size:1.6rem; }
+
+    /* Sections */
+    section{ padding:3.5rem 0; border-bottom:1px solid var(--line); }
+    h2{ font-size:1.9rem; font-weight:600; letter-spacing:-.01em; margin:.4rem 0 1.2rem; }
+    .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+    @media (max-width:720px){ .grid{ grid-template-columns:1fr; } }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1.4rem; }
+    .card h3{ font-size:1.15rem; margin:.5rem 0 .4rem; }
+    .card p{ font-size:.98rem; color:var(--muted); margin:0; }
+
+    /* Flow record */
+    .record{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1.5rem 1.6rem; }
+    .record .row{ display:flex; gap:1rem; padding:.7rem 0; border-top:1px solid var(--line); align-items:baseline; }
+    .record .row:first-child{ border-top:0; }
+    .record .k{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem;
+      letter-spacing:.18em; color:var(--muted); width:130px; flex:none; text-transform:uppercase; }
+    .stat{ display:flex; gap:2.5rem; flex-wrap:wrap; margin-top:1rem; }
+    .stat b{ font-size:2.2rem; font-weight:600; display:block; }
+    .stat span{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem;
+      letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+
+    footer{ padding:2.5rem 0 4rem; color:var(--muted); font-size:.9rem; }
+    footer a{ color:var(--muted); }
+    a.inline{ color:var(--nestle); }
   </style>
 </head>
 <body>
-  <h1>isNestle — Privacy Policy</h1>
-  <p class="updated">Last updated: 28 June 2026</p>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow"><span class="stamp"></span>Ownership, at a glance</div>
+      <h1>Is it Nestlé?</h1>
+      <p class="lede">Scan a product barcode and know in an instant whether it's made by Nestlé — fully offline, with nothing tracked.</p>
+      <div class="ctas">
+        <a class="cta" href="https://github.com/tonylchang/isNestle">View on GitHub →</a>
+        <a class="cta ghost" href="privacy.html">Privacy</a>
+      </div>
+      <p class="note">iPhone · iOS 16+ · open source (MIT) · TestFlight coming soon</p>
+    </div>
+  </header>
 
-  <div class="tldr">
-    <strong>The short version:</strong> isNestle is built to collect nothing. There
-    is no account, no analytics, no tracking, and no server run by us. By default
-    the app works entirely offline and nothing about what you scan ever leaves your
-    phone.
+  <div class="wrap">
+    <div class="demo" aria-hidden="true">
+      <div class="verdict no">
+        <div class="ico">⊘</div>
+        <div class="face">NESTLÉ</div>
+        <div class="sub">KitKat → Nestlé · this product is made by Nestlé.</div>
+      </div>
+      <div class="verdict yes">
+        <div class="ico">✓</div>
+        <div class="face">NO NESTLÉ MATCH</div>
+        <div class="sub">Not found in the Nestlé database — most likely fine.</div>
+      </div>
+    </div>
   </div>
 
-  <h2>What we collect</h2>
-  <p><strong>Nothing.</strong> We operate no servers and store none of your data.
-  We do not use analytics, advertising, or tracking SDKs.</p>
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">Why it exists</div>
+      <h2>Some brands hide who owns them.</h2>
+      <p style="max-width:60ch;color:var(--muted)">Nestlé is a vast conglomerate, and many of its brands are marketed without any visible link to the parent company. If you're choosing where your money goes, that's hard to see at the shelf. isNestle makes it one scan.</p>
+    </div>
+  </section>
 
-  <h2>Camera</h2>
-  <p>The camera is used solely to detect a barcode on your device, in real time.
-  No photos or video are recorded, saved, or transmitted.</p>
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps, on your device.</h2>
+      <div class="grid">
+        <div class="card"><div class="eyebrow">01</div><h3>Scan</h3><p>Point the camera at a barcode. Detection happens on-device — no photo is stored or sent.</p></div>
+        <div class="card"><div class="eyebrow">02</div><h3>Resolve</h3><p>A bundled database maps barcode → brand → parent company, instantly and offline.</p></div>
+        <div class="card"><div class="eyebrow">03</div><h3>Decide</h3><p>A clear verdict with the ownership chain — read it in a glance or study the full record.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <h2>Scanning is offline by default</h2>
-  <p>The app ships with a bundled product/ownership database, so scans are answered
-  on your device. With the optional online lookup turned off (the default), no
-  information about a scan leaves your phone.</p>
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">Private by default</div>
+      <h2>Nothing about your scan leaves your phone.</h2>
+      <div class="record mono">
+        <div class="row"><div class="k">Accounts</div><div>None. No sign-up, ever.</div></div>
+        <div class="row"><div class="k">Tracking</div><div>No analytics, no ads, no SDKs.</div></div>
+        <div class="row"><div class="k">Scanning</div><div>Answered on-device from the bundled data.</div></div>
+        <div class="row"><div class="k">Online lookup</div><div>Off by default. Opt-in, for unknown barcodes only.</div></div>
+      </div>
+      <p class="note">Full <a class="inline" href="privacy.html">privacy policy →</a></p>
+    </div>
+  </section>
 
-  <h2>Dataset updates</h2>
-  <p>To keep its data current, the app may download an updated database file from a
-  public, static host (GitHub Releases). This is a plain file download — it reveals
-  nothing about what you have scanned or searched.</p>
-
-  <h2>Optional online lookup (off by default)</h2>
-  <p>You can turn on “Online lookup” to identify barcodes that aren’t in the
-  offline database. When (and only when) it is enabled, a scanned barcode that the
-  app can’t resolve locally is sent to <a href="https://world.openfoodfacts.org">Open
-  Food Facts</a> to look up the product. Only the barcode (and, inherent to any
-  internet request, your device’s IP address) is sent. We do not log or store it.
-  Open Food Facts’ own
-  <a href="https://world.openfoodfacts.org/privacy">privacy policy</a> applies to
-  that request. You can turn the feature off at any time.</p>
-
-  <h2>Stored on your device</h2>
-  <p>Only your preferences (selected theme, online-lookup toggle) are saved locally
-  on your device. They are never transmitted.</p>
-
-  <h2>Third parties</h2>
-  <ul>
-    <li><strong>Open Food Facts</strong> — only when you enable online lookup, as
-      described above.</li>
-    <li><strong>Apple</strong> — distribution happens through the App Store /
-      TestFlight; Apple’s standard policies apply to the download itself.</li>
-  </ul>
-
-  <h2>Children</h2>
-  <p>isNestle does not knowingly collect any personal information from anyone,
-  including children.</p>
-
-  <h2>Changes</h2>
-  <p>If this policy changes, the “Last updated” date above will change and the
-  revised policy will be posted at this URL.</p>
-
-  <h2>Contact</h2>
-  <p>Questions or issues:
-  <a href="https://github.com/tonylchang/isNestle">github.com/tonylchang/isNestle</a>.</p>
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">The data</div>
+      <h2>Open data, openly built.</h2>
+      <p style="max-width:60ch;color:var(--muted)">Assembled from Open Food Facts (ODbL), Wikidata (CC0), and Wikipedia, with curated corrections. The pipeline and its findings are in the repo.</p>
+      <div class="stat">
+        <div><b>601</b><span>Brands</span></div>
+        <div><b>33,275</b><span>Barcodes</span></div>
+        <div><b>~3 MB</b><span>Offline DB</span></div>
+      </div>
+    </div>
+  </section>
 
   <footer>
-    Product data from Open Food Facts (ODbL). Brand ownership from Wikidata (CC0)
-    and Wikipedia. isNestle is an independent project and is not affiliated with,
-    endorsed by, or sponsored by Nestlé S.A.
+    <div class="wrap">
+      <p>Product data: Open Food Facts (ODbL) · Brand ownership: Wikidata (CC0), Wikipedia.</p>
+      <p>isNestle is an independent project and is not affiliated with, endorsed by, or sponsored by Nestlé S.A.
+         · <a href="https://github.com/tonylchang/isNestle">Source</a> · <a href="privacy.html">Privacy</a></p>
+    </div>
   </footer>
 </body>
 </html>

@@ -1,92 +1,109 @@
-# AI Project Spec Pattern
+# isNestle
 
-A template for **spec-driven development** with Claude Code.
+**Scan a barcode. Know if it's Nestlé. Fully offline.**
 
-## The Idea
+isNestle is an iOS app that scans a product barcode and tells you whether the
+product is made by **Nestlé** or one of its subsidiaries. Many Nestlé brands are
+marketed in ways that hide the connection to the parent company — isNestle removes
+that ambiguity at the shelf, in a glance.
 
-Project specs are typically monolithic documents that are hard to maintain and hard for AI to reference precisely. This pattern breaks specifications into **atomic, modular primitives** ("elements") — each covering one discrete concern. The modular structure means updates are lightweight and precise: changing your deployment target updates `INFRA.md` alone, not a 20-page spec doc.
+It's **privacy-first**: by default everything happens on your device and nothing
+about what you scan ever leaves your phone. And it's built to **generalize** —
+Nestlé is just the first boycott target; the engine is data-driven, so other parent
+companies are a data change, not a code change.
 
-This atomic approach gives Claude (or any AI coding agent) clean, focused context for every decision — and makes ongoing spec evolution cheap instead of painful.
+🔗 **Site:** https://tonylchang.github.io/isNestle/ · **Privacy:** https://tonylchang.github.io/isNestle/privacy.html
 
-## How It Works
+---
 
-1. **Clone or fork this template** into a new project
-2. **Run `/init`** in Claude Code — Claude interviews you and generates all spec elements
-3. **Run `/save-original`** to snapshot the baseline spec
-4. **Develop with guardrails** — `CLAUDE.md` instructs Claude to reference your specs before making decisions
-5. **Evolve the spec** with `/update-spec` — only the affected elements are modified
+## How it works
 
-## The Spec Elements
-
-All elements live in `/spec/elements/`. Each is a standalone, atomic document covering one concern:
-
-| File | What It Defines |
-|------|----------------|
-| `PURPOSE.md` | Why this project exists, who it's for |
-| `FEATURES.md` | Core features, planned features, and explicit exclusions |
-| `STACK.md` | Approved and excluded technologies |
-| `UI.md` | Interface type, platform targets, UX preferences |
-| `INFRA.md` | Deployment, hosting, CI/CD, monitoring |
-| `CONSTRAINTS.md` | Budget, timeline, team size, licensing |
-| `PROJECT.md` | Development lifecycle, milestones, release plan |
-| `VERSIONING.md` | Version scheme, release cadence, tagging strategy |
-| `CONTEXT.md` | Freeform catch-all for anything else relevant |
-
-The `/spec/original/` directory preserves the initial spec as an immutable baseline for comparison as the project evolves.
-
-## Slash Commands
-
-| Command | What It Does |
-|---------|-------------|
-| `/init` | Interactive interview — Claude asks questions and generates all spec elements |
-| `/voice-init` | Generate specs from a voice note — transcribes via AssemblyAI, then parses into elements |
-| `/save-original` | Snapshot current spec elements into `/spec/original/` as the immutable baseline |
-| `/update-spec` | Apply targeted updates — user describes changes, only affected elements are modified |
-
-## Why This Pattern
-
-- **Atomic and modular** — each spec element is independent, so updates are surgical rather than wholesale
-- **Lightweight ongoing updates** — changing one decision updates one file, not a monolithic document
-- **Reduces drift** — Claude checks specific elements before introducing new tech or features
-- **Explicit scope** — "out of scope" sections prevent feature creep
-- **Reproducible onboarding** — `/init` or `/voice-init` generates a consistent spec set for every project
-- **Spec evolution tracking** — `/spec/original/` preserves the baseline so you can see how the project evolved
-- **Human-readable** — specs are plain Markdown, useful with or without AI tooling
-
-## Setup
-
-### Prerequisites
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
-- (Optional) [AssemblyAI](https://www.assemblyai.com/) API key for `/voice-init`
-
-### Getting Started
-
-```bash
-# Option 1: GitHub template
-gh repo create my-project --template danielrosehill/AI-Project-Spec-Pattern
-
-# Option 2: Clone and reinitialize
-git clone https://github.com/danielrosehill/AI-Project-Spec-Pattern.git my-project
-cd my-project
-rm -rf .git && git init
-
-# Set up AssemblyAI (optional, for voice-init)
-cp .env.example .env
-# Edit .env with your API key
-
-# Then open in Claude Code and run:
-# /init        — for interactive onboarding
-# /voice-init  — to start from a voice note
+```
+scan barcode ─► bundled SQLite ─► brand ─► parent ─► verdict
+                     │
+                     └─ miss + online lookup ON (opt-in) ─► Open Food Facts API ─► confident verdict
 ```
 
-## Customizing
+- **Offline-first.** A ~3 MB SQLite database ships in the app, so scans are
+  answered on-device with no network.
+- **Clear verdict.** ❌ **Nestlé** (avoid) / ✅ **No Nestlé match** (likely clear),
+  with the ownership chain (brand → parent) and an explanation.
+- **Opt-in online lookup** (off by default). When enabled, a barcode that isn't in
+  the bundle is resolved against the free Open Food Facts API for a *confident*
+  "not Nestlé" plus the product name. Only then does a barcode leave the device.
+- **Two themes.** *Minimal* (bold, full-screen color verdict) and *Informational*
+  (a calm, typographic "ownership record" dossier) — switchable in Settings.
 
-- **Add spec elements**: If your project needs additional primitives (e.g., `SECURITY.md`, `DATA-MODEL.md`), add them to `/spec/elements/` and reference them in `CLAUDE.md`.
-- **Modify the interview**: Edit `.claude/commands/init.md` to change the onboarding questions.
-- **Modify voice parsing**: Edit `.claude/commands/voice-init.md` to adjust how transcripts are parsed.
-- **Layer on existing preferences**: The `/init` command can skeleton `STACK.md` from your global Claude preferences if you have them configured.
+## Repository layout
+
+| Path | What it is |
+|------|------------|
+| [`app/`](app) | The SwiftUI iOS app (XcodeGen project). See [`app/README.md`](app/README.md). |
+| [`data-pipeline/`](data-pipeline) | Python pipeline that builds the bundled SQLite from open data. See [`data-pipeline/FINDINGS.md`](data-pipeline/FINDINGS.md). |
+| [`docs/`](docs) | The GitHub Pages site (landing page + privacy policy). |
+| [`spec/`](spec) | Spec-driven development docs (see below). |
+
+## The data
+
+The bundled dataset currently holds **601 brands** and **33,275 barcodes**
+(regenerated by the pipeline). It's assembled from open sources:
+
+- **Open Food Facts** (barcode → brand) — ODbL
+- **Wikidata** (brand → parent company; Nestlé = `Q160746`) — CC0
+- **Wikipedia** "List of Nestlé brands" + curated corrections
+
+Brand-name normalization between sources is the hard part; see
+[`data-pipeline/FINDINGS.md`](data-pipeline/FINDINGS.md) for the details and
+match-rate analysis. Known gap: pet care (Purina) is thin in Open Food Facts.
+
+## Build & run
+
+The app is a SwiftUI project generated with [XcodeGen](https://github.com/yonyz/XcodeGen).
+Full steps (signing, running on device) are in [`app/README.md`](app/README.md):
+
+```bash
+brew install xcodegen
+cd app
+cp Local.xcconfig.example Local.xcconfig   # set your DEVELOPMENT_TEAM
+xcodegen generate
+open isNestle.xcodeproj
+```
+
+To rebuild the dataset, see [`data-pipeline/README.md`](data-pipeline/README.md).
+
+## Privacy
+
+isNestle collects nothing. No account, no analytics, no tracking, no server of
+ours. With online lookup off (default), nothing about a scan leaves the device.
+Full policy: https://tonylchang.github.io/isNestle/privacy.html
+
+## Spec-driven development
+
+This project is built spec-first. The product's intent and constraints live as
+atomic, modular documents in [`spec/elements/`](spec/elements)
+(`PURPOSE`, `FEATURES`, `STACK`, `UI`, `INFRA`, `CONSTRAINTS`, `PROJECT`,
+`VERSIONING`, `CONTEXT`), with [`spec/original/`](spec/original) preserving the
+immutable baseline. Read those to understand *why* the app is built the way it is.
+
+## Roadmap
+
+- ✅ **M0** — data spike (proved barcode → Nestlé resolution, offline)
+- ✅ **M1** — core app (scan → verdict, runs on device)
+- 🔄 **M2** — self-update + coverage: opt-in online fallback ✅, themes ✅,
+  privacy policy ✅; remaining: daily data pipeline + in-app self-update, then
+  TestFlight
+- 🔭 **Later** — App Store release, scan history, alternatives, multi-company
+  boycott lists, more themes
 
 ## License
 
-MIT
+- **App code:** MIT (see [`LICENSE`](LICENSE) once added).
+- **Dataset:** ODbL (inherited from Open Food Facts); the derived database is
+  published for download. Brand→parent facts are CC0 (Wikidata).
+
+## Disclaimer
+
+isNestle is an independent project and is **not affiliated with, endorsed by, or
+sponsored by Nestlé S.A.** Ownership data may be incomplete or out of date, and
+some brands are made under license by other companies in certain regions. Verdicts
+are a guide, not a legal statement.
