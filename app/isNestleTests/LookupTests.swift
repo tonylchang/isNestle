@@ -33,6 +33,15 @@ final class LookupTests: XCTestCase {
         XCTAssertTrue(hits.allSatisfy { $0.isTarget }, "all dataset brands map to the target")
     }
 
+    func testMatchTargetBrandFromSlugs() throws {
+        let db = try makeDB()
+        // OFF would return brands_tags like these; the online fallback maps them.
+        XCTAssertNotNil(db.matchTargetBrand(slugs: ["coca-cola", "nestle"]),
+                        "nestle slug should map to a target brand")
+        XCTAssertNil(db.matchTargetBrand(slugs: ["coca-cola", "pepsi"]),
+                     "no target brand among these slugs")
+    }
+
     func testCountsAreHealthy() throws {
         let db = try makeDB()
         let c = db.counts()

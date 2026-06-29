@@ -79,6 +79,24 @@ final class BarcodeDatabase {
         return hits
     }
 
+    /// Given OFF brand slugs for a product, return the first that maps to a target
+    /// (Nestlé) brand in our table — used by the opt-in online fallback to turn an
+    /// online result into a verdict using only the bundled brand list.
+    func matchTargetBrand(slugs: [String]) -> (brandName: String, parent: String)? {
+        let sql = "SELECT brand_name, parent FROM brands WHERE brand_slug = ? AND is_target = 1 LIMIT 1;"
+        for slug in slugs {
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { continue }
+            sqlite3_bind_text(stmt, 1, slug, -1, Self.transient)
+            let hit = sqlite3_step(stmt) == SQLITE_ROW
+            let name = hit ? sqlite3_column_text(stmt, 0).map { String(cString: $0) } : nil
+            let parent = hit ? sqlite3_column_text(stmt, 1).map { String(cString: $0) } : nil
+            sqlite3_finalize(stmt)
+            if hit { return (name ?? slug, parent ?? "Nestlé") }
+        }
+        return nil
+    }
+
     /// Row counts, for the About screen.
     func counts() -> (brands: Int, barcodes: Int) {
         func count(_ table: String) -> Int {

@@ -25,8 +25,13 @@ struct OwnershipResult: Identifiable, Equatable {
     let brandName: String?
     let parent: String?        // e.g. "Nestlé"
     let verdict: Verdict
+    var productName: String? = nil   // from the online fallback (OFF); local has none
+    var fromOnline: Bool = false     // resolved via the opt-in online lookup
 
     var id: String { query }
+
+    /// Best human label for the scanned item: product name if known, else brand.
+    var displayName: String? { productName ?? brandName }
 
     /// Ownership chain for display, most specific first (brand → parent).
     var chain: [String] {

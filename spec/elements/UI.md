@@ -21,6 +21,20 @@ surfaces: manual brand search, verdict detail (ownership chain), and settings.
 
 ## Design Preferences
 
+### Screen Layout (scanner-first)
+
+The main screen is split so the camera and the result share it:
+
+- **Camera viewfinder rectangle** (top ~44% of the screen) — a rounded box showing
+  the live camera. Scanning is **restricted to this rectangle** via VisionKit's
+  `regionOfInterest`; everything outside the viewfinder is dimmed. Scanning is
+  **continuous** (point at one product after another). In the Simulator (no
+  camera) the box becomes a manual barcode-entry field.
+- **Display area** (the rest) — shows the latest verdict inline, or, when idle,
+  instructions + the ODbL data attribution.
+- **Online-lookup bar** (pinned at the bottom) — the persistent opt-in control for
+  the online fallback (off by default, with a privacy note). See `FEATURES.md`.
+
 ### Theme System (extensible)
 
 The verdict presentation is a **pluggable theme**, not hard-coded. v1 ships **two
@@ -28,9 +42,12 @@ themes**, and the system must be built so additional themes can be added later
 without touching core logic (a theme is a view/style module fed the same verdict
 model).
 
-- **Minimal** — bold & instant. Full-screen, color-flooded result; giant icon and
-  one or two words (e.g., "NESTLÉ" / "NOT NESTLÉ" / "UNKNOWN"). Optimized to be
-  read in a fraction of a second at the shelf.
+- **Minimal** (shipped) — bold & instant. The display area is **color-flooded**
+  (red = Nestlé / green = no match) with a large icon, a one- or two-word headline
+  ("NESTLÉ" / "NO NESTLÉ MATCH" / "NOT NESTLÉ"), the scanned **product/brand name**,
+  the ownership chain (brand → parent), and a one-line explanation — readable in a
+  fraction of a second at the shelf. Rendered inline beneath the live camera (not a
+  full-screen takeover), so the user can keep scanning.
 - **Informational** — calm & detailed. A neutral card showing the verdict *plus*
   the full ownership chain (product → brand → subsidiary → parent) and any
   supporting context, for users who want the "why."

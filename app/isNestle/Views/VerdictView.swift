@@ -97,7 +97,8 @@ private struct VerdictStyle {
             let brand = r.brandName.map { " (brand: \($0))" } ?? ""
             return "This product is made by \(Target.name)\(brand)."
         case .notTarget:
-            return "This product is not made by \(Target.name)."
+            let brand = r.brandName.map { " It’s \($0)." } ?? ""
+            return "Not made by \(Target.name).\(brand)"
         case .unknown:
             return "Not found in the \(Target.name) database, so it’s most likely fine. Coverage isn’t exhaustive, though — this isn’t a guarantee. You can double-check with a brand search."
         }
@@ -117,11 +118,11 @@ private struct VerdictStyle {
 /// instructions when nothing has been scanned yet.
 struct ResultPanel: View {
     let result: OwnershipResult?
-    let onClear: () -> Void
+    let isLookingUp: Bool
 
     var body: some View {
         if let result {
-            VerdictPanel(result: result, onClear: onClear)
+            VerdictPanel(result: result, isLookingUp: isLookingUp)
         } else {
             IdlePanel()
         }
@@ -154,20 +155,26 @@ private struct IdlePanel: View {
 /// icon + text, never color alone).
 private struct VerdictPanel: View {
     let result: OwnershipResult
-    let onClear: () -> Void
+    let isLookingUp: Bool
     private var style: VerdictStyle { VerdictStyle(result.verdict) }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             Spacer(minLength: 8)
             Image(systemName: style.symbol)
-                .font(.system(size: 54, weight: .bold))
+                .font(.system(size: 50, weight: .bold))
                 .foregroundStyle(.white)
                 .accessibilityHidden(true)
             Text(style.headline)
-                .font(.system(size: 34, weight: .heavy, design: .rounded))
+                .font(.system(size: 32, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
+            if let name = result.productName {
+                Text(name)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+            }
             if !result.chain.isEmpty {
                 Text(result.chain.joined(separator: "  →  "))
                     .font(.headline)
@@ -179,9 +186,21 @@ private struct VerdictPanel: View {
                 .foregroundStyle(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+            if result.fromOnline {
+                Label("via online lookup", systemImage: "wifi")
+                    .font(.caption2).foregroundStyle(.white.opacity(0.85))
+            }
             Spacer(minLength: 8)
-            Text("Point at another barcode to scan again")
-                .font(.caption).foregroundStyle(.white.opacity(0.85))
+            if isLookingUp {
+                HStack(spacing: 6) {
+                    ProgressView().tint(.white)
+                    Text("Checking online…")
+                }
+                .font(.caption).foregroundStyle(.white.opacity(0.9))
+            } else {
+                Text("Point at another barcode to scan again")
+                    .font(.caption).foregroundStyle(.white.opacity(0.85))
+            }
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

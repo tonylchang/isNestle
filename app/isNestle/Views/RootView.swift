@@ -58,17 +58,51 @@ struct ScannerScreen: View {
             VStack(spacing: 0) {
                 // Camera viewfinder — the only region that scans.
                 BarcodeScannerView { code in model.handleScanned(code) }
-                    .frame(height: geo.size.height * 0.46)
+                    .frame(height: geo.size.height * 0.44)
                     .background(Color.black)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.quaternary))
                     .padding([.horizontal, .top])
 
                 // The rest of the screen: live result / instructions display.
-                ResultPanel(result: model.result, onClear: model.clear)
+                ResultPanel(result: model.result, isLookingUp: model.isLookingUp)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Persistent opt-in control for the online fallback.
+                OnlineLookupBar(enabled: $model.onlineEnabled)
             }
         }
         .background(Color(.systemBackground))
+    }
+}
+
+/// The "spot" for the opt-in online lookup — off by default, with a privacy note.
+struct OnlineLookupBar: View {
+    @Binding var enabled: Bool
+    @State private var showInfo = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: enabled ? "wifi" : "wifi.slash")
+                .foregroundStyle(enabled ? Color.accentColor : .secondary)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Online lookup").font(.subheadline.weight(.medium))
+                Text(enabled ? "Checks unknown barcodes online" : "Off — fully private")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            Button { showInfo = true } label: { Image(systemName: "info.circle") }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
+                .accessibilityLabel("About online lookup")
+            Spacer(minLength: 4)
+            Toggle("Online lookup", isOn: $enabled).labelsHidden()
+        }
+        .padding(.horizontal).padding(.vertical, 10)
+        .background(.bar)
+        .alert("Online lookup", isPresented: $showInfo) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify it — giving a confident result and the product name. Only the barcode (and your IP) is sent; nothing is stored.")
+        }
     }
 }
