@@ -218,9 +218,10 @@ private struct VerdictPanel: View {
     }
 }
 
-/// Calm & detailed: a neutral card with a colored accent + verdict header, the
-/// product/brand name, the ownership chain, and supporting context. Color is
-/// reinforced by an icon + text (never color alone).
+/// Calm & detailed: a proper card with a colored verdict header band, structured
+/// Product / Ownership fields (ownership shown as a small tree), the "why", and the
+/// data sources. A clear contrast to Minimal's full-screen color flood. Color is
+/// always reinforced by an icon + text.
 private struct InformationalPanel: View {
     let result: OwnershipResult
     let isLookingUp: Bool
@@ -228,52 +229,80 @@ private struct InformationalPanel: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(spacing: 0) {
+                // Colored verdict header band.
                 HStack(spacing: 12) {
-                    Image(systemName: style.symbol)
-                        .font(.title).foregroundStyle(style.color)
-                    Text(style.headline)
-                        .font(.title2.weight(.heavy)).foregroundStyle(style.color)
+                    Image(systemName: style.symbol).font(.title2.weight(.bold))
+                    Text(style.headline).font(.title2.weight(.heavy))
+                    Spacer(minLength: 0)
                 }
+                .foregroundStyle(.white)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(style.color)
 
-                if let name = result.displayName {
-                    labeled("Product", name)
-                }
-                if !result.chain.isEmpty {
-                    labeled("Ownership", result.chain.joined(separator: "  →  "))
-                }
-
-                Text(style.detail(result))
-                    .font(.subheadline)
-
-                if result.fromOnline {
-                    Label("Identified via online lookup", systemImage: "wifi")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                if isLookingUp {
-                    HStack(spacing: 6) {
-                        ProgressView()
-                        Text("Checking online…").font(.caption).foregroundStyle(.secondary)
+                // Neutral card body.
+                VStack(alignment: .leading, spacing: 16) {
+                    if let name = result.displayName {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("PRODUCT", systemImage: "shippingbox.fill")
+                                .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                            Text(name).font(.title3.weight(.semibold))
+                        }
                     }
+                    if !result.chain.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("OWNERSHIP", systemImage: "building.2.fill")
+                                .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                            ownershipChain
+                        }
+                    }
+                    Divider()
+                    Text(style.detail(result)).font(.subheadline)
+                    if result.fromOnline {
+                        Label("Identified via online lookup", systemImage: "wifi")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if isLookingUp {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                            Text("Checking online…").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Text("Data: Open Food Facts (ODbL), Wikidata (CC0). May be incomplete.")
+                        .font(.caption2).foregroundStyle(.tertiary).padding(.top, 4)
                 }
-
-                Spacer(minLength: 12)
-                Text("Data: Open Food Facts (ODbL), Wikidata (CC0). May be incomplete.")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemBackground))
             }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(.quaternary))
+            .shadow(color: .black.opacity(0.10), radius: 10, y: 4)
             .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .overlay(alignment: .leading) { Rectangle().fill(style.color).frame(width: 5) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(style.accessibilityLabel(result))
     }
 
-    @ViewBuilder
-    private func labeled(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-            Text(value).font(.headline)
+    /// Ownership rendered as a small tree: brand(s) → parent, parent flagged.
+    private var ownershipChain: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(result.chain.enumerated()), id: \.offset) { idx, node in
+                let isParent = idx == result.chain.count - 1
+                HStack(spacing: 8) {
+                    Image(systemName: isParent ? "flag.checkered" : "tag.fill")
+                        .font(.caption)
+                        .foregroundStyle(isParent ? style.color : .secondary)
+                        .frame(width: 18)
+                    Text(node).font(isParent ? .headline : .subheadline.weight(.medium))
+                    Spacer(minLength: 0)
+                }
+                if !isParent {
+                    Image(systemName: "arrow.down")
+                        .font(.caption2).foregroundStyle(.tertiary).padding(.leading, 5)
+                }
+            }
         }
     }
 }
