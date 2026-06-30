@@ -16,8 +16,10 @@ but several adjacent apps exist — and their shortcomings define this project's
   Google ad networks; an **anti-pattern**, not a reference.
 
 **Differentiator:** every app in this space phones a server on each scan, and
-several leak user data. isNestle being **fully offline + zero-data-collection** is
-the genuine, defensible differentiator — not a nice-to-have.
+several leak user data. isNestle being **offline by default, zero-analytics, and
+serverless on our side** is the genuine, defensible differentiator — not a
+nice-to-have. The only scan-time network path is the explicit Open Food Facts
+opt-in fallback.
 
 ## Key References
 

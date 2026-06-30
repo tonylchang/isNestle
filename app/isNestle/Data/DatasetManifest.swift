@@ -2,7 +2,7 @@ import Foundation
 
 /// Describes a published dataset (matches data-pipeline/build_manifest.py).
 struct DatasetManifest: Codable, Equatable {
-    let version: String          // CalVer "YYYY.MM.DD"
+    let version: String          // UTC CalVer timestamp "YYYY.MM.DD.HHMM"
     let sqlite_url: String
     let sqlite_sha256: String
     let sqlite_bytes: Int
@@ -15,6 +15,6 @@ extension DatasetManifest {
     static let remoteURL = URL(string:
         "https://github.com/tonylchang/isNestle/releases/download/dataset-latest/manifest.json")!
 
-    /// CalVer compares correctly as plain strings ("2026.06.28" < "2026.07.01").
+    /// Zero-padded UTC timestamps compare correctly as plain strings.
     func isNewer(than other: DatasetManifest) -> Bool { version > other.version }
 }

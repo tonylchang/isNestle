@@ -1,0 +1,7 @@
+[mcp_servers.assemblyai]
+command = "npx"
+args = [
+    "-y",
+    "assemblyai-mcp-server",
+]
+env_vars = ["ASSEMBLYAI_API_KEY"]

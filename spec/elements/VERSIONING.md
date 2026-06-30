@@ -15,10 +15,12 @@ There are **two independently versioned artifacts**: the **app** and the
   Store release is **`1.0.0`**; subsequent major App Store milestones bump MAJOR.
 - `MINOR` / `PATCH` follow normal SemVer (features vs fixes) within a line.
 
-### Dataset — CalVer (`YYYY.MM.DD`)
-- The dataset rebuilds daily, so it is dated, not SemVer'd.
+### Dataset — UTC CalVer timestamp (`YYYY.MM.DD.HHMM`)
+- The dataset rebuilds daily, with minute-resolution versions so manual reruns on
+  the same day are visible to clients. It is dated, not SemVer'd.
 - The current version is carried in the **manifest JSON** the app checks daily; the
-  app compares dates to decide whether to download a newer dataset.
+  app compares zero-padded timestamp strings to decide whether to download a newer
+  dataset.
 - Independent of the app version — a dataset refresh never requires an app release.
 
 ## Release Cadence
@@ -34,8 +36,8 @@ There are **two independently versioned artifacts**: the **app** and the
   tagged build.
 - **Dataset:** a **single rolling GitHub Release** (tag `dataset-latest`, updated
   in place) holds the current derived SQLite + manifest. This avoids generating
-  hundreds of releases per year; the manifest's `YYYY.MM.DD` date is the
-  authoritative dataset version, and the rolling release satisfies the ODbL
+  hundreds of releases per year; the manifest's `YYYY.MM.DD.HHMM` timestamp is
+  the authoritative dataset version, and the rolling release satisfies the ODbL
   requirement to keep the current derived database downloadable.
 
 ## Pre-release Labels
@@ -49,4 +51,4 @@ There are **two independently versioned artifacts**: the **app** and the
 - Maintain a **`CHANGELOG.md`** in **Keep a Changelog** format for **app** releases
   (Added / Changed / Fixed / Removed), tied to git tags.
 - **Dataset** changes are automated and daily, so they are **not** tracked in the
-  app CHANGELOG; the manifest date is the dataset's record of change.
+  app CHANGELOG; the manifest timestamp is the dataset's record of change.

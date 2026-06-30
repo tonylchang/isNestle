@@ -35,13 +35,13 @@ verdicts fully offline.
 Automate the GitHub Actions daily pipeline → GitHub Releases (multi-source: OFF +
 Open Beauty Facts + Wikidata + curated); implement the in-app daily manifest check
 + dataset download/swap; add the **opt-in online fallback** (off by default, free
-OFF API) so the app can cover **any** barcode and give confident "not Nestlé"
-verdicts; add the **Informational** theme + settings (theme picker, online-lookup
-toggle); add ODbL attribution + accuracy disclaimer; publish the privacy policy on
-GitHub Pages.
+OFF API) so the app can identify catalogued products, check their brand tags
+against the target list, and catch target products missing from the bundle; add
+the theme picker, online-lookup toggle, and settings screen; add ODbL attribution
+and accuracy disclaimer; publish the privacy policy on GitHub Pages.
 Progress: ✅ daily GitHub Actions pipeline → rolling `dataset-latest` release;
 ✅ in-app daily manifest check + verified download/atomic swap; ✅ opt-in online
-fallback; ✅ Minimal + Informational themes + Settings; ✅ ODbL attribution +
+fallback; ✅ four themes + Settings; ✅ ODbL attribution +
 disclaimer; ✅ privacy policy live on GitHub Pages. Remaining: **TestFlight**
 (blocked on the paid Apple account leaving "Pending").
 

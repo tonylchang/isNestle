@@ -33,9 +33,13 @@ jobs:
           python3 build_barcodes.py
           python3 build_db.py
 
+      - name: Validate dataset
+        working-directory: data-pipeline
+        run: python3 test_spike.py
+
       - name: Build manifest
         working-directory: data-pipeline
-        run: python3 build_manifest.py --version "$(date -u +%Y.%m.%d)"
+        run: python3 build_manifest.py --version "$(date -u +%Y.%m.%d.%H%M)"
 
       - name: Summarize
         working-directory: data-pipeline
@@ -50,7 +54,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="$(date -u +%Y.%m.%d)"
+          VERSION="$(date -u +%Y.%m.%d.%H%M)"
           # Ensure the rolling release exists (ignore "already exists").
           gh release create dataset-latest \
             --title "Dataset (latest)" \

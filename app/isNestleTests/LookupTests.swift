@@ -60,6 +60,8 @@ final class LookupTests: XCTestCase {
         func m(_ v: String) -> DatasetManifest {
             DatasetManifest(version: v, sqlite_url: "", sqlite_sha256: "", sqlite_bytes: 1, brands: 1, barcodes: 1)
         }
+        XCTAssertTrue(m("2026.06.28.1200").isNewer(than: m("2026.06.28.0617")))
+        XCTAssertFalse(m("2026.06.28.0617").isNewer(than: m("2026.06.28.0617")))
         XCTAssertTrue(m("2026.07.01").isNewer(than: m("2026.06.28")))
         XCTAssertFalse(m("2026.06.28").isNewer(than: m("2026.06.28")))
         XCTAssertFalse(m("2026.06.27").isNewer(than: m("2026.06.28")))

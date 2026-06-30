@@ -12,7 +12,7 @@ Sources (all best-effort; a partial failure of one source does NOT abort the run
   3. Curated aliases  — hand-picked slug variants for major brands, because
                         OFF's brands_tags are inconsistent.
 
-Stdlib only (Python 3.14). Re-runnable: overwrites out/brands.csv each run.
+Stdlib only (Python 3.12+). Re-runnable: overwrites out/brands.csv each run.
 
 Run:  python3 build_brands.py
 """

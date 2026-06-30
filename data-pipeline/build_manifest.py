@@ -5,10 +5,10 @@ The manifest is what the app checks to decide whether to self-update. It is
 published to GitHub Releases alongside isnestle.sqlite (see the dataset workflow),
 and a copy is bundled in the app as the install-time baseline.
 
-Version is CalVer (YYYY.MM.DD per VERSIONING.md); pass it in (CI uses the run date)
-or it defaults to today.
+Version is a UTC CalVer timestamp (YYYY.MM.DD.HHMM); pass it in (CI uses the run
+time) or it defaults to now.
 
-    python3 build_manifest.py [--version 2026.06.28]
+    python3 build_manifest.py [--version 2026.06.28.0617]
 """
 from __future__ import annotations
 
@@ -31,8 +31,9 @@ def _count(con: sqlite3.Connection, table: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build the dataset manifest.")
-    parser.add_argument("--version", default=_dt.date.today().strftime("%Y.%m.%d"),
-                        help="CalVer dataset version (default: today, YYYY.MM.DD)")
+    default_version = _dt.datetime.now(_dt.timezone.utc).strftime("%Y.%m.%d.%H%M")
+    parser.add_argument("--version", default=default_version,
+                        help="UTC dataset version (default: now, YYYY.MM.DD.HHMM)")
     args = parser.parse_args(argv)
 
     db = common.SQLITE_DB

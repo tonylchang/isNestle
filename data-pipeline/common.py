@@ -3,7 +3,7 @@
 Both pipeline halves import from here so they cannot drift on the two things
 that must agree: the brand *slug* format and how we talk to the network.
 
-Stdlib only (Python 3.14) — no pip installs, to keep the parallel agents from
+Stdlib only (Python 3.12+ in CI) — no pip installs, to keep the parallel agents from
 racing on a shared environment.
 """
 from __future__ import annotations
@@ -30,6 +30,11 @@ PARENT_DEFAULT = "Nestlé"
 WIKIDATA_SPARQL = "https://query.wikidata.org/sparql"
 WIKIDATA_NESTLE_QID = "Q160746"
 OFF_SEARCH_URL = "https://search.openfoodfacts.org/search"  # Search-a-licious (fast)
+# OFF-family sibling DBs (all ODbL). They don't run Search-a-licious, so the
+# barcode pipeline queries their classic Product Opener REST API (/api/v2/search).
+OPFF_SEARCH_URL = "https://world.openpetfoodfacts.org/api/v2/search"   # pet care (Purina)
+OBF_SEARCH_URL = "https://world.openbeautyfacts.org/api/v2/search"     # cosmetics
+OPF_SEARCH_URL = "https://world.openproductsfacts.org/api/v2/search"   # household / non-food
 USER_AGENT = "isNestle-data-spike/0.1 (https://github.com/tonylchang/isNestle; M0 data pipeline)"
 
 

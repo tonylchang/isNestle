@@ -13,11 +13,18 @@ in the assembled SQLite resolves to `parent = Nestlé`, and a non-Nestlé barcod
 | Layer | Source | Access method | License |
 |-------|--------|---------------|---------|
 | brand → parent | Wikidata (`Q160746`) + Wikipedia "List of Nestlé brands" | SPARQL `query.wikidata.org/sparql` (HTTP 200 OK) | CC0 |
-| barcode → brand | Open Food Facts | **Search-a-licious** `search.openfoodfacts.org/search?q=brands_tags:<slug>` (fast & reliable) | ODbL |
+| barcode → brand | **OFF family** — Open Food Facts + Open Pet Food / Beauty / Products Facts | OFF via **Search-a-licious** `search.openfoodfacts.org`; siblings via classic `world.open{pet,beauty,products}facts.org/api/v2/search?brands_tags=<slug>` | ODbL |
 
-> The slow `/api/v2/search` endpoint and guessing individual product barcodes
-> proved unreliable — use Search-a-licious. The full 9 GB OFF bulk dump is **out of
-> scope for the spike**; it belongs to the production daily pipeline (`INFRA.md`).
+The barcode side queries the whole **OFF family** (`build_barcodes.py`), not just
+OFF, so non-food gaps close — **Open Pet Food Facts** in particular covers the
+Purina / pet-care products OFF lacks. All four DBs are ODbL, so every barcode is
+bundle-able; barcodes are de-duplicated across them (OFF wins ties). Limit the
+fan-out with `--datasets off,opff` (ids: `off`, `opff`, `obf`, `opf`).
+
+> Only OFF runs Search-a-licious; the siblings redirect, so they use the classic
+> `/api/v2/search` (fine — those DBs are small). Guessing individual barcodes
+> proved unreliable. The full 9 GB OFF bulk dump is **out of scope for the spike**;
+> it belongs to the production daily pipeline (`INFRA.md`).
 
 ## The contract (`common.py` + `schema.sql`)
 
@@ -45,8 +52,8 @@ python3 build_manifest.py    # -> out/manifest.json (version, sha256, counts)
 python3 test_spike.py        # asserts the spike's done-criterion
 ```
 
-Stdlib only (Python 3.14): `urllib`, `json`, `csv`, `sqlite3`, `hashlib`. No pip
-installs. `out/` is gitignored (regenerate by re-running).
+Stdlib only (Python 3.12+ in CI): `urllib`, `json`, `csv`, `sqlite3`, `hashlib`.
+No pip installs. `out/` is gitignored (regenerate by re-running).
 
 ## Daily publication
 

@@ -32,6 +32,9 @@ KNOWN_NESTLE = [
 ]
 # Require at least this many of the above to resolve (resilient to OFF data drift).
 MIN_NESTLE_PASS = 3
+MIN_BRANDS = 500
+MIN_MATCHED_BRAND_SLUGS = 250
+MIN_BARCODES = 10000
 
 # Real NON-Nestlé barcode CONFIRMED via Search-a-licious: brands_tags == ['coca-cola'].
 NON_NESTLE = ("7702535016688", "Coca-Cola Fuze Tea (coca-cola)")
@@ -55,8 +58,23 @@ def main() -> int:
     conn = sqlite3.connect(common.SQLITE_DB)
     failures: list[str] = []
 
+    print("== SQLite integrity ==")
+    integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+    if integrity == "ok":
+        print("  PASS  PRAGMA integrity_check -> ok")
+    else:
+        print(f"  FAIL  PRAGMA integrity_check -> {integrity}")
+        failures.append(f"sqlite integrity_check failed: {integrity}")
+
+    fk_errors = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if not fk_errors:
+        print("  PASS  PRAGMA foreign_key_check -> no orphaned rows")
+    else:
+        print(f"  FAIL  PRAGMA foreign_key_check -> {len(fk_errors)} violation(s)")
+        failures.append(f"sqlite foreign_key_check found {len(fk_errors)} violation(s)")
+
     # --- Positive: known Nestlé barcodes resolve to Nestlé -------------------
-    print("== Known Nestlé barcodes (expect parent='Nestlé', is_target=1) ==")
+    print("\n== Known Nestlé barcodes (expect parent='Nestlé', is_target=1) ==")
     nestle_pass = 0
     for barcode, desc in KNOWN_NESTLE:
         row = lookup(conn, barcode)
@@ -101,6 +119,14 @@ def main() -> int:
     rate = (matched / total_slugs * 100.0) if total_slugs else 0.0
     print(f"  brand_slugs with >=1 OFF barcode: {matched}/{total_slugs} ({rate:.0f}%)")
     print(f"  total barcodes in dataset:        {n_barcodes}")
+    if total_slugs < MIN_BRANDS:
+        failures.append(f"brand count is {total_slugs}, expected at least {MIN_BRANDS}")
+    if matched < MIN_MATCHED_BRAND_SLUGS:
+        failures.append(
+            f"only {matched} brand slugs have barcodes, expected at least {MIN_MATCHED_BRAND_SLUGS}"
+        )
+    if n_barcodes < MIN_BARCODES:
+        failures.append(f"barcode count is {n_barcodes}, expected at least {MIN_BARCODES}")
     if zero_hits:
         print(f"  ZERO-hit slugs (normalization misses, {len(zero_hits)}): {', '.join(zero_hits)}")
     else:

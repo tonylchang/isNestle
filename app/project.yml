@@ -50,5 +50,6 @@ targets:
       - target: isNestle
     settings:
       base:
+        GENERATE_INFOPLIST_FILE: "YES"
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/isNestle.app/isNestle"
         BUNDLE_LOADER: "$(TEST_HOST)"

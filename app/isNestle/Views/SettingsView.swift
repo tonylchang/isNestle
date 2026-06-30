@@ -23,7 +23,7 @@ struct SettingsView: View {
 
             Section("Online lookup") {
                 Toggle("Check unknown barcodes online", isOn: $model.onlineEnabled)
-                Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify it — giving a confident result and the product name. Only the barcode (and your IP) is sent; nothing is stored.")
+                Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify the product and check its brand against the target list. Only the barcode (and your IP) is sent; nothing is stored.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -32,7 +32,7 @@ struct SettingsView: View {
                 LabeledContent("Brands", value: "\(counts.brands)")
                 LabeledContent("Barcodes", value: "\(counts.barcodes)")
                 Button {
-                    Task { await model.checkForDatasetUpdate() }
+                    Task { await model.checkForDatasetUpdate(force: true) }
                 } label: {
                     HStack {
                         Text("Check for updates")

@@ -20,8 +20,8 @@ verdict by combining two open data sources, fully offline, in a small SQLite fil
 | Metric | Value |
 |--------|-------|
 | Brands (brand → Nestlé) | 601 |
-| Real barcodes (from OFF) | 3,949 |
-| SQLite size | ~452 KB |
+| Real barcodes (from OFF family) | 33,275 |
+| SQLite size | ~2.9 MB |
 | Network at scan time | none (fully offline) |
 
 Tiny and offline — exactly the on-device shape `STACK.md` envisions.
@@ -29,10 +29,10 @@ Tiny and offline — exactly the on-device shape `STACK.md` envisions.
 ## Key findings (the real value of the spike)
 
 ### 1. Brand-name normalization is the central problem — quantified
-Only **325 / 601 (54%)** of brand slugs matched an OFF `brands_tags` value. The
+Only **319 / 601 (53%)** of brand slugs matched an OFF-family `brands_tags` value. The
 misses are dominated by **legitimate but obscure regional brands** absent from
-OFF (Abuelita, Ricoffy, Golden Morn…) plus a few **categories OFF covers poorly**
-— notably **pet care** (the Purina lines), which likely needs a non-OFF source.
+the public product datasets (Abuelita, Ricoffy, Golden Morn…) plus categories
+where coverage is still thin.
 
 OFF's tagger is also inconsistent about hyphenation: **`kitkat` and `kit-kat`
 are both real, separately-populated tags** (487 vs 253 products). The brand list

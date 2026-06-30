@@ -12,12 +12,13 @@ Must-have for the first usable release:
   and determine whether the parent is the active boycott target (Nestlé in v1).
 - **Clear verdict** — show an unambiguous result:
   - ❌ **Nestlé** — made by Nestlé (or a subsidiary) → avoid
-  - ✅ **No Nestlé match** — not found in the Nestlé data → likely clear
-  - ❓ **Unknown** — only when online lookup is on and *no* source has the product
+  - ✅ **Not Nestlé** — confirmed not made by the target, when a comprehensive
+    product/ownership source supports that conclusion
+  - ❓ **No Nestlé match** — not found in the current Nestlé data; not proof either way
 
-  Offline, a non-match is shown as "No Nestlé match" with an honest hedge (coverage
-  isn't exhaustive). A *confident* "not Nestlé" requires the opt-in online lookup
-  (below), which can read the full product database.
+  Offline, a non-match is shown as "No Nestlé match" with an honest hedge because
+  coverage isn't exhaustive. Online lookup can add product/brand context and catch
+  target products missing from the bundle, but a no-match result remains hedged.
 - **Explain the verdict** — show the ownership chain that produced the answer
   (product → brand → subsidiary → parent), so the result is transparent and
   trustworthy.
@@ -25,10 +26,10 @@ Must-have for the first usable release:
   network. With online lookup off, the app is **fully offline**.
 - **Opt-in online lookup (coverage)** — *off by default.* Goal: cover **every
   barcode**. When enabled, a barcode not in the bundle is resolved via an online
-  lookup, so the app can give a **confident "not Nestlé"** for any catalogued
-  product and catch Nestlé products missing from the bundle. v1 uses the **free
-  Open Food Facts API** (full ~4M-product DB); commercial UPC APIs for the
-  pet-food / non-food last mile are a **future, budget-gated** upgrade (see
+  lookup, so the app can identify catalogued products, run their brand tags
+  through the target list, and catch Nestlé products missing from the bundle. v1
+  uses the **free Open Food Facts API**; commercial UPC APIs for the pet-food /
+  non-food last mile are a **future, budget-gated** upgrade (see
   `CONSTRAINTS.md`). When on, only the scanned barcode (+ IP) reaches the lookup
   service — clearly disclosed; the app still runs no server of its own and stores
   nothing.

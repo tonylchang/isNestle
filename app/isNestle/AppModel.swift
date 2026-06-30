@@ -22,7 +22,7 @@ final class AppModel: ObservableObject {
     /// Self-update status (shown in Settings).
     @Published var updateState: DatasetUpdateState = .idle
 
-    /// Active dataset version (CalVer), for display.
+    /// Active dataset version (UTC CalVer timestamp), for display.
     var datasetVersion: String { DatasetStore.activeManifest?.version ?? "unknown" }
     /// Opt-in online fallback; persisted, off by default.
     @Published var onlineEnabled: Bool {
@@ -35,6 +35,7 @@ final class AppModel: ObservableObject {
 
     private static let onlineKey = "onlineLookupEnabled"
     private static let themeKey = "appTheme"
+    private static let lastUpdateCheckKey = "lastDatasetUpdateCheckDate"
     private var lookupTask: Task<Void, Never>?
 
     init() {
@@ -49,22 +50,36 @@ final class AppModel: ObservableObject {
             handleScanned(CommandLine.arguments[i + 1])
         }
         #endif
-        Task { await checkForDatasetUpdate() }   // daily self-update on launch
+        Task { await checkForDatasetUpdate() }   // daily self-update check on launch
     }
 
     /// Check the rolling release for a newer dataset; reopen the DB if installed.
-    func checkForDatasetUpdate() async {
+    func checkForDatasetUpdate(force: Bool = false) async {
         guard updateState != .checking else { return }
+        guard force || shouldCheckDatasetToday() else { return }
         updateState = .checking
         switch await DatasetUpdater.checkAndUpdate() {
         case .upToDate:
+            markDatasetUpdateChecked()
             updateState = .upToDate
         case .updated(let m):
+            markDatasetUpdateChecked()
             db = BarcodeDatabase()             // reopen the freshly installed file
             updateState = .updated(m.version)
         case .failed(let why):
             updateState = .failed(why)
         }
+    }
+
+    private func shouldCheckDatasetToday(now: Date = Date()) -> Bool {
+        guard let last = UserDefaults.standard.object(forKey: Self.lastUpdateCheckKey) as? Date else {
+            return true
+        }
+        return !Calendar.current.isDate(last, inSameDayAs: now)
+    }
+
+    private func markDatasetUpdateChecked(now: Date = Date()) {
+        UserDefaults.standard.set(now, forKey: Self.lastUpdateCheckKey)
     }
 
     func handleScanned(_ barcode: String) {
@@ -91,12 +106,13 @@ final class AppModel: ObservableObject {
             result = OwnershipResult(query: barcode, brandName: match.brandName, parent: match.parent,
                                      verdict: .match, productName: hit.productName, fromOnline: true)
         } else if hit.brandsDisplay != nil || !hit.brandSlugs.isEmpty {
-            // OFF knows the product and its brand isn't a target → confident "not
-            // Nestlé", and we can show the real brand + maker.
+            // OFF can identify the product, but our target-owned brand list did
+            // not match. Keep this as "unknown/no match" rather than asserting
+            // the product is definitely not target-owned.
             let brand = hit.brandsDisplay
                 ?? hit.brandSlugs.first.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
             result = OwnershipResult(query: barcode, brandName: brand, parent: nil,
-                                     verdict: .notTarget, productName: hit.productName,
+                                     verdict: .unknown, productName: hit.productName,
                                      manufacturer: hit.owner, fromOnline: true)
         }
         // else: OFF doesn't have it either → leave the local "no match" result as-is.

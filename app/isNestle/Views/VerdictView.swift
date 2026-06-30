@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Shared verdict styling
 
 /// Visual + textual mapping for each verdict. Red = a boycott match (avoid),
-/// green = clear. Color is always reinforced by an SF Symbol + text (never color
-/// alone — accessibility, UI.md).
+/// green = confirmed clear, gray = unknown/no match. Color is always reinforced
+/// by an SF Symbol + text (never color alone — accessibility, UI.md).
 struct VerdictStyle {
     let verdict: Verdict
     init(_ v: Verdict) { verdict = v }
@@ -13,13 +13,14 @@ struct VerdictStyle {
         switch verdict {
         case .match:     return Color(red: 0.78, green: 0.13, blue: 0.13)
         case .notTarget: return Color(red: 0.13, green: 0.50, blue: 0.24)
-        case .unknown:   return Color(red: 0.16, green: 0.52, blue: 0.30)
+        case .unknown:   return Color(red: 0.34, green: 0.36, blue: 0.39)
         }
     }
     var symbol: String {
         switch verdict {
         case .match:     return "xmark.octagon.fill"
-        case .notTarget, .unknown: return "checkmark.seal.fill"
+        case .notTarget: return "checkmark.seal.fill"
+        case .unknown:   return "questionmark.circle.fill"
         }
     }
     var headline: String {
@@ -46,7 +47,10 @@ struct VerdictStyle {
             let maker = r.manufacturer.map { " Made by \($0)." } ?? ""
             return "Not made by \(Target.name).\(maker)"
         case .unknown:
-            return "Not found in the \(Target.name) database, so it’s most likely fine — but coverage isn’t exhaustive."
+            if r.fromOnline, r.displayName != nil {
+                return "Product identified online, but no \(Target.name) ownership match was found in the current database. Coverage isn’t exhaustive."
+            }
+            return "Not found in the \(Target.name) database. Coverage isn’t exhaustive, so this isn’t proof either way."
         }
     }
     func accessibilityLabel(_ r: OwnershipResult) -> String {
