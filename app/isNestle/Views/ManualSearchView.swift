@@ -36,9 +36,16 @@ struct ManualSearchView: View {
         }
         .navigationTitle("Brand search")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, prompt: "Brand name")
-        .onChange(of: query) { _ in
-            hits = db?.searchBrands(query: query) ?? []
-        }
+        .searchable(text: searchText, prompt: "Brand name")
+    }
+
+    private var searchText: Binding<String> {
+        Binding(
+            get: { query },
+            set: { newQuery in
+                query = newQuery
+                hits = db?.searchBrands(query: newQuery) ?? []
+            }
+        )
     }
 }
