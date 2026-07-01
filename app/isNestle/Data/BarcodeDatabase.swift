@@ -92,9 +92,30 @@ final class BarcodeDatabase {
             let name = hit ? sqlite3_column_text(stmt, 0).map { String(cString: $0) } : nil
             let parent = hit ? sqlite3_column_text(stmt, 1).map { String(cString: $0) } : nil
             sqlite3_finalize(stmt)
-            if hit { return (name ?? slug, parent ?? "Nestlé") }
+            if hit { return (name ?? slug, parent ?? activeTarget().name) }
         }
         return nil
+    }
+
+    /// The first active boycott target declared by the dataset.
+    func activeTarget() -> BoycottTarget {
+        let sql = """
+        SELECT parent
+        FROM brands
+        WHERE is_target = 1
+        GROUP BY parent
+        ORDER BY COUNT(*) DESC, parent
+        LIMIT 1;
+        """
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK,
+              sqlite3_step(stmt) == SQLITE_ROW,
+              let name = sqlite3_column_text(stmt, 0).map({ String(cString: $0) }),
+              !name.isEmpty else {
+            return .defaultTarget
+        }
+        return BoycottTarget(name: name)
     }
 
     /// Row counts, for the About screen.

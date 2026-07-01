@@ -5,6 +5,22 @@ import Foundation
 /// Privacy: this is a plain file download — it reveals nothing about what was
 /// scanned (see the privacy policy). It runs only against the static release host.
 enum DatasetUpdater {
+    struct Configuration {
+        let remoteManifestURL: URL
+        let store: DatasetStoreConfiguration
+        let data: (URLRequest) async throws -> (Data, URLResponse)
+        let download: (URLRequest) async throws -> (URL, URLResponse)
+
+        static var live: Configuration {
+            Configuration(
+                remoteManifestURL: DatasetManifest.remoteURL,
+                store: .live,
+                data: { try await URLSession.shared.data(for: $0) },
+                download: { try await URLSession.shared.download(for: $0) }
+            )
+        }
+    }
+
     enum Result: Equatable {
         case upToDate
         case updated(DatasetManifest)
@@ -12,16 +28,20 @@ enum DatasetUpdater {
     }
 
     static func checkAndUpdate() async -> Result {
-        guard let current = DatasetStore.activeManifest else {
+        await checkAndUpdate(configuration: .live)
+    }
+
+    static func checkAndUpdate(configuration: Configuration) async -> Result {
+        guard let current = DatasetStore.activeManifest(in: configuration.store) else {
             return .failed("No active dataset")
         }
         // 1. Fetch the remote manifest.
         let remote: DatasetManifest
         do {
-            var req = URLRequest(url: DatasetManifest.remoteURL)
+            var req = URLRequest(url: configuration.remoteManifestURL)
             req.timeoutInterval = 15
             req.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, resp) = try await URLSession.shared.data(for: req)
+            let (data, resp) = try await configuration.data(req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return .failed("Manifest unavailable") }
             remote = try JSONDecoder().decode(DatasetManifest.self, from: data)
         } catch {
@@ -35,7 +55,7 @@ enum DatasetUpdater {
         do {
             var req = URLRequest(url: url)
             req.timeoutInterval = 120
-            let (tempURL, resp) = try await URLSession.shared.download(for: req)
+            let (tempURL, resp) = try await configuration.download(req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return .failed("Download failed") }
 
             // 3. Verify size + SHA-256 before trusting it.
@@ -45,7 +65,7 @@ enum DatasetUpdater {
             guard digest == remote.sqlite_sha256 else { return .failed("Checksum mismatch") }
 
             // 4. Install atomically.
-            try DatasetStore.install(sqlite: tempURL, manifest: remote)
+            try DatasetStore.install(sqlite: tempURL, manifest: remote, in: configuration.store)
             return .updated(remote)
         } catch {
             return .failed("Update failed")

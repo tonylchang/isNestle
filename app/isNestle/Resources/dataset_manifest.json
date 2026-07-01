@@ -1,8 +1,8 @@
 {
-  "version": "2026.06.28",
+  "version": "2026.06.30.0302",
   "sqlite_url": "https://github.com/tonylchang/isNestle/releases/download/dataset-latest/isnestle.sqlite",
-  "sqlite_sha256": "dd008a499a8c49bc2095de92ecbaa82b0fa76d7e0ca605335967c21c23572854",
+  "sqlite_sha256": "bd9946c9dd58deb7cfb195ad17ecc9a81992d6c0ac08fac1bb07d6449b204d81",
   "sqlite_bytes": 3088384,
   "brands": 601,
-  "barcodes": 33275
+  "barcodes": 33424
 }

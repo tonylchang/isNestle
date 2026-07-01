@@ -1,10 +1,11 @@
 import Foundation
 
-/// The active boycott target. Data-driven by design (see PURPOSE.md / STACK.md):
-/// the target is a value, not hard-coded logic, so supporting other companies
-/// later is a data change, not a code change.
-enum Target {
-    static let name = "Nestlé"
+/// The active boycott target. The app reads this from the dataset's target rows;
+/// the default is only a v1 fallback if the dataset cannot be opened.
+struct BoycottTarget: Equatable {
+    let name: String
+
+    static let defaultTarget = BoycottTarget(name: "Nestlé")
 }
 
 /// The possible outcomes of a lookup.

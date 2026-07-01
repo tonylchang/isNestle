@@ -25,7 +25,7 @@ struct RootView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
-                        ManualSearchView(db: model.db)
+                        ManualSearchView(db: model.db, target: model.target)
                     } label: {
                         Image(systemName: "magnifyingglass")
                     }
@@ -65,7 +65,8 @@ struct ScannerScreen: View {
                     .padding([.horizontal, .top])
 
                 // The rest of the screen: live result / instructions display.
-                ResultPanel(result: model.result, isLookingUp: model.isLookingUp, theme: model.theme)
+                ResultPanel(result: model.result, isLookingUp: model.isLookingUp,
+                            theme: model.theme, target: model.target)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // Persistent opt-in control for the online fallback.

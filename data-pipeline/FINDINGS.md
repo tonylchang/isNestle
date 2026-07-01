@@ -20,7 +20,7 @@ verdict by combining two open data sources, fully offline, in a small SQLite fil
 | Metric | Value |
 |--------|-------|
 | Brands (brand → Nestlé) | 601 |
-| Real barcodes (from OFF family) | 33,275 |
+| Real barcodes (from OFF family) | 33,424 |
 | SQLite size | ~2.9 MB |
 | Network at scan time | none (fully offline) |
 
@@ -61,7 +61,7 @@ The eventual data model may need to represent "made by X, in region Y."
   will be much faster.
 - **Barcode coverage expanded post-spike.** The 25/brand spike cap was removed in
   favor of full pagination (250/page, up to OFF's 10k result window) — the dataset
-  is now **33,275 barcodes** (~2.9 MB SQLite), with **no brand exceeding the
+  is now **33,424 barcodes** (~2.9 MB SQLite), with **no brand exceeding the
   window**. The full OFF bulk dump remains the eventual production source (see
   `INFRA.md`) for products beyond what Search-a-licious returns (e.g. pet care).
 

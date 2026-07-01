@@ -21,6 +21,7 @@ iPhone; the Simulator has no camera and falls back to manual barcode entry.
 - **SwiftUI**, iOS 16+, iPhone-only.
 - `BarcodeDatabase` — dependency-free read-only access to the bundled
   `isnestle.sqlite` via the system `SQLite3` module (see `/spec/elements/STACK.md`).
+  The active boycott target is read from the dataset's `is_target` rows.
 - `BarcodeScannerView` — VisionKit `DataScannerViewController` on device; manual
   barcode entry fallback where unsupported (Simulator).
 - `ResultPanel` / `VerdictView` — four switchable themes fed by the same
@@ -32,7 +33,7 @@ iPhone; the Simulator has no camera and falls back to manual barcode entry.
   online-lookup opt-in, dataset status, attribution, and disclaimer.
 
 The bundled `isNestle/Resources/isnestle.sqlite` is produced by the
-[data-pipeline](../data-pipeline): 601 brands, 33,275 barcodes.
+[data-pipeline](../data-pipeline): 601 brands, 33,424 barcodes.
 
 ## Build & run
 
@@ -60,6 +61,12 @@ xcodebuild -project app/isNestle.xcodeproj -scheme isNestle \
 # Run the tests
 xcodebuild test -project app/isNestle.xcodeproj -scheme isNestle \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+```
+
+Release asset verification:
+
+```bash
+python3 ../scripts/verify_release_assets.py
 ```
 
 ### Run on your iPhone

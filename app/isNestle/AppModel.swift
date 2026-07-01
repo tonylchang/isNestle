@@ -17,6 +17,8 @@ final class AppModel: ObservableObject {
 
     /// The latest scan result, shown in the display area. `nil` = nothing yet.
     @Published var result: OwnershipResult?
+    /// Active boycott target, read from the dataset.
+    @Published private(set) var target: BoycottTarget = .defaultTarget
     /// True while an online lookup is in flight (shows a "checking…" hint).
     @Published var isLookingUp = false
     /// Self-update status (shown in Settings).
@@ -40,6 +42,7 @@ final class AppModel: ObservableObject {
 
     init() {
         db = BarcodeDatabase()
+        target = db?.activeTarget() ?? .defaultTarget
         onlineEnabled = UserDefaults.standard.bool(forKey: Self.onlineKey)
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .minimal
         #if DEBUG
@@ -65,6 +68,7 @@ final class AppModel: ObservableObject {
         case .updated(let m):
             markDatasetUpdateChecked()
             db = BarcodeDatabase()             // reopen the freshly installed file
+            target = db?.activeTarget() ?? .defaultTarget
             updateState = .updated(m.version)
         case .failed(let why):
             updateState = .failed(why)

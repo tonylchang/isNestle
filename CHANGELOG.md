@@ -1,0 +1,19 @@
+# Changelog
+
+All notable app changes are documented in this file.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and app versions follow Semantic Versioning during the `0.x` TestFlight phase.
+Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.json`.
+
+## [Unreleased]
+
+### Changed
+
+- Refreshed the bundled offline dataset to version `2026.06.30.0302`
+  (`601` brands, `33,424` barcodes).
+- Read the active boycott target from the bundled dataset instead of hard-coding
+  it through the result UI.
+- Split verdict theme renderers into separate Swift files.
+- Added release asset verification for the bundled SQLite and manifest.
+- Documented the local/TestFlight release checklist and Xcode Cloud setup.
