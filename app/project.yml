@@ -30,7 +30,7 @@ targets:
         # generated keys merge on top. See app/Info.plist.
         INFOPLIST_FILE: Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.2.0"
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_NSCameraUsageDescription: "isNestle uses the camera only to scan product barcodes on your device. Nothing is recorded, stored, or sent anywhere."
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
