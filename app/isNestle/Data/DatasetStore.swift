@@ -63,6 +63,19 @@ enum DatasetStore {
         return configuration.bundledDatabaseURL
     }
 
+    /// Open the dataset the app should use. If the downloaded copy turns out to
+    /// be unreadable (corrupted on disk after install), discard it — so the next
+    /// daily check re-downloads instead of staying wedged — and fall back to the
+    /// bundled dataset rather than leaving the app with no database at all.
+    static func openActiveDatabase(in configuration: DatasetStoreConfiguration = .live) -> BarcodeDatabase? {
+        let active = activeDatabaseURL(in: configuration)
+        if let db = BarcodeDatabase(url: active) { return db }
+        guard let bundled = configuration.bundledDatabaseURL, active != bundled else { return nil }
+        try? FileManager.default.removeItem(at: configuration.downloadedDatabaseURL)
+        try? FileManager.default.removeItem(at: configuration.downloadedManifestURL)
+        return BarcodeDatabase(url: bundled)
+    }
+
     private static func downloadedManifestValue(in configuration: DatasetStoreConfiguration) -> DatasetManifest? {
         guard let data = try? Data(contentsOf: configuration.downloadedManifestURL) else { return nil }
         return try? JSONDecoder().decode(DatasetManifest.self, from: data)

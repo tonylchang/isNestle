@@ -15,9 +15,16 @@ final class BarcodeDatabase {
 
     /// Opens the active dataset (a self-updated copy if present, else the bundled
     /// one — resolved by `DatasetStore`). Pass an explicit URL to override.
+    ///
+    /// Fails (returns nil) unless the file is a readable database with non-empty
+    /// `brands` and `barcodes` tables. The probe matters because `sqlite3_open`
+    /// is lazy — it succeeds even on a corrupt or non-SQLite file, and the error
+    /// would otherwise only surface as every lookup silently returning nothing.
     init?(url: URL? = DatasetStore.activeDatabaseURL) {
         guard let url else { return nil }
-        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
+              (rowCount("brands") ?? 0) > 0,
+              (rowCount("barcodes") ?? 0) > 0 else {
             sqlite3_close(db)
             db = nil
             return nil
@@ -120,13 +127,15 @@ final class BarcodeDatabase {
 
     /// Row counts, for the About screen.
     func counts() -> (brands: Int, barcodes: Int) {
-        func count(_ table: String) -> Int {
-            var stmt: OpaquePointer?
-            defer { sqlite3_finalize(stmt) }
-            guard sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM \(table);", -1, &stmt, nil) == SQLITE_OK,
-                  sqlite3_step(stmt) == SQLITE_ROW else { return 0 }
-            return Int(sqlite3_column_int(stmt, 0))
-        }
-        return (count("brands"), count("barcodes"))
+        (rowCount("brands") ?? 0, rowCount("barcodes") ?? 0)
+    }
+
+    /// nil when the table can't be queried (corrupt / not a database / missing table).
+    private func rowCount(_ table: String) -> Int? {
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM \(table);", -1, &stmt, nil) == SQLITE_OK,
+              sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        return Int(sqlite3_column_int(stmt, 0))
     }
 }

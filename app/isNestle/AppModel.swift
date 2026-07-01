@@ -41,7 +41,7 @@ final class AppModel: ObservableObject {
     private var lookupTask: Task<Void, Never>?
 
     init() {
-        db = BarcodeDatabase()
+        db = DatasetStore.openActiveDatabase()
         target = db?.activeTarget() ?? .defaultTarget
         onlineEnabled = UserDefaults.standard.bool(forKey: Self.onlineKey)
         theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .minimal
@@ -67,7 +67,7 @@ final class AppModel: ObservableObject {
             updateState = .upToDate
         case .updated(let m):
             markDatasetUpdateChecked()
-            db = BarcodeDatabase()             // reopen the freshly installed file
+            db = DatasetStore.openActiveDatabase()   // reopen the freshly installed file
             target = db?.activeTarget() ?? .defaultTarget
             updateState = .updated(m.version)
         case .failed(let why):

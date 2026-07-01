@@ -62,3 +62,8 @@ publishes `isnestle.sqlite` + `manifest.json` to the rolling **`dataset-latest`*
 GitHub Release. The app checks `manifest.json` and self-updates (see
 `app/isNestle/Data/DatasetUpdater.swift`). The app also bundles a baseline
 `dataset_manifest.json` (copy of a `manifest.json`) as its install-time version.
+
+Before publishing, the workflow runs `check_counts.py` against the previously
+published manifest and **fails if brands or barcodes shrank more than 10%** —
+a degraded source (OFF search flake, Wikipedia format drift) shrinks the output
+rather than erroring, and this guard keeps such a build from shipping to users.

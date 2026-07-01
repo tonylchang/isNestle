@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import SQLite3
 import XCTest
 @testable import isNestle
 
@@ -105,10 +106,12 @@ final class LookupTests: XCTestCase {
         let config = try makeStoreConfiguration(bundled: bundled)
         let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
         let sqliteURL = try XCTUnwrap(URL(string: "https://example.com/isnestle.sqlite"))
-        let sqliteData = Data("new sqlite data".utf8)
+        let sqliteData = try makeSQLiteFixture()
         let remote = manifest(version: "2026.07.01.0617",
                               sqliteURL: sqliteURL.absoluteString,
-                              sqliteData: sqliteData)
+                              sqliteData: sqliteData,
+                              brands: fixtureBrandCount,
+                              barcodes: fixtureBarcodeCount)
         let downloadURL = try tempFile(data: sqliteData)
 
         let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
@@ -154,6 +157,67 @@ final class LookupTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
     }
 
+    func testDatasetUpdaterRejectsCorruptDataset() async throws {
+        // Correct size and checksum, but the bytes aren't a SQLite database —
+        // must be rejected by the health check, not installed.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
+        let sqliteData = Data("checksummed but not a database".utf8)
+        let remote = manifest(version: "2026.07.01.0617", sqliteData: sqliteData)
+        let downloadURL = try tempFile(data: sqliteData)
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
+            remoteManifestURL: remoteURL,
+            store: config,
+            data: { _ in (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL)) },
+            download: { _ in (downloadURL, self.httpResponse(for: remoteURL)) }
+        ))
+
+        XCTAssertEqual(result, .failed("Dataset unreadable"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+    }
+
+    func testDatasetUpdaterRejectsCountMismatch() async throws {
+        // A real database whose row counts don't match the manifest's claims.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
+        let sqliteData = try makeSQLiteFixture()
+        let remote = manifest(version: "2026.07.01.0617", sqliteData: sqliteData,
+                              brands: fixtureBrandCount + 5, barcodes: fixtureBarcodeCount)
+        let downloadURL = try tempFile(data: sqliteData)
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
+            remoteManifestURL: remoteURL,
+            store: config,
+            data: { _ in (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL)) },
+            download: { _ in (downloadURL, self.httpResponse(for: remoteURL)) }
+        ))
+
+        XCTAssertEqual(result, .failed("Dataset counts mismatch"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+    }
+
+    func testOpenActiveDatabaseFallsBackToBundleWhenDownloadIsCorrupt() throws {
+        // A corrupt downloaded copy (newer manifest, garbage file) must not brick
+        // lookups: fall back to the bundled dataset and discard the download so
+        // the next daily check re-downloads.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let downloaded = manifest(version: "2026.07.01.0617")
+        let config = try makeStoreConfiguration(bundled: bundled,
+                                                downloaded: downloaded,
+                                                bundledData: makeSQLiteFixture(),
+                                                downloadedData: Data("corrupt".utf8))
+
+        XCTAssertEqual(DatasetStore.activeDatabaseURL(in: config), config.downloadedDatabaseURL)
+        let db = try XCTUnwrap(DatasetStore.openActiveDatabase(in: config))
+        XCTAssertEqual(db.counts().brands, fixtureBrandCount)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedManifestURL.path))
+        XCTAssertEqual(DatasetStore.activeManifest(in: config), bundled)
+    }
+
     func testDatasetUpdaterSkipsDownloadWhenRemoteIsNotNewer() async throws {
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
@@ -188,23 +252,57 @@ final class LookupTests: XCTestCase {
     }
 
     private func makeStoreConfiguration(bundled: DatasetManifest,
-                                        downloaded: DatasetManifest? = nil) throws -> DatasetStoreConfiguration {
+                                        downloaded: DatasetManifest? = nil,
+                                        bundledData: Data = Data("bundled sqlite".utf8),
+                                        downloadedData: Data = Data("downloaded sqlite".utf8)) throws -> DatasetStoreConfiguration {
         let root = try tempDirectory()
         let bundledDB = root.appendingPathComponent("bundle.sqlite")
         let bundledManifest = root.appendingPathComponent("bundle_manifest.json")
         let appSupport = root.appendingPathComponent("ApplicationSupport")
-        try Data("bundled sqlite".utf8).write(to: bundledDB)
+        try bundledData.write(to: bundledDB)
         try JSONEncoder().encode(bundled).write(to: bundledManifest)
 
         if let downloaded {
             try FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
-            try Data("downloaded sqlite".utf8).write(to: appSupport.appendingPathComponent("isnestle.sqlite"))
+            try downloadedData.write(to: appSupport.appendingPathComponent("isnestle.sqlite"))
             try JSONEncoder().encode(downloaded).write(to: appSupport.appendingPathComponent("dataset_manifest.json"))
         }
 
         return DatasetStoreConfiguration(bundledDatabaseURL: bundledDB,
                                          bundledManifestURL: bundledManifest,
                                          appSupportDirectory: appSupport)
+    }
+
+    /// Row counts baked into `makeSQLiteFixture()`.
+    private let fixtureBrandCount = 2
+    private let fixtureBarcodeCount = 3
+
+    /// A real, minimal dataset SQLite (schema.sql shape) as raw bytes, so tests
+    /// can exercise the updater's health check with an installable file.
+    private func makeSQLiteFixture() throws -> Data {
+        let url = try tempDirectory().appendingPathComponent("fixture.sqlite")
+        var db: OpaquePointer?
+        defer { sqlite3_close(db) }
+        guard sqlite3_open(url.path, &db) == SQLITE_OK else {
+            throw NSError(domain: "LookupTests", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "could not create fixture db"])
+        }
+        let sql = """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1), ('kitkat', 'KitKat', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('1111111111111', 'nestle', 'test'),
+                                    ('2222222222222', 'kitkat', 'test'),
+                                    ('3333333333333', 'kitkat', 'test');
+        """
+        guard sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK else {
+            throw NSError(domain: "LookupTests", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "could not populate fixture db"])
+        }
+        sqlite3_close(db)
+        db = nil
+        return try Data(contentsOf: url)
     }
 
     private func tempDirectory() throws -> URL {

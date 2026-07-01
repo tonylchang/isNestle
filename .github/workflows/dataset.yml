@@ -41,6 +41,19 @@ jobs:
         working-directory: data-pipeline
         run: python3 build_manifest.py --version "$(date -u +%Y.%m.%d.%H%M)"
 
+      - name: Guard against dataset shrink
+        working-directory: data-pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A degraded source shrinks the output instead of failing; refuse to
+          # publish if counts dropped >10% vs the currently published dataset.
+          if gh release download dataset-latest --pattern manifest.json --output previous_manifest.json; then
+            python3 check_counts.py --previous previous_manifest.json
+          else
+            echo "::warning::No previous manifest found (first publish?) — skipping shrink check."
+          fi
+
       - name: Summarize
         working-directory: data-pipeline
         run: |

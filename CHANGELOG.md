@@ -8,6 +8,16 @@ Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.jso
 
 ## [Unreleased]
 
+### Added
+
+- Validate a downloaded dataset before installing it: it must open as a SQLite
+  database and its row counts must match the manifest, so a corrupt publish is
+  rejected instead of installed.
+- Fall back to the bundled dataset (and discard the downloaded copy so the next
+  daily check re-downloads) if the stored dataset is unreadable at launch.
+- Daily pipeline now refuses to publish a dataset whose brand/barcode counts
+  shrank more than 10% versus the previous release (`check_counts.py`).
+
 ### Changed
 
 - Refreshed the bundled offline dataset to version `2026.06.30.0302`

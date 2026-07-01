@@ -64,7 +64,21 @@ enum DatasetUpdater {
             let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
             guard digest == remote.sqlite_sha256 else { return .failed("Checksum mismatch") }
 
-            // 4. Install atomically.
+            // 4. The bytes are authentic, but a checksum can't prove they're a
+            //    usable dataset — open it and require the row counts to match
+            //    the manifest's own, so a corrupt publish never gets installed.
+            let counts: (brands: Int, barcodes: Int)
+            do {
+                guard let candidate = BarcodeDatabase(url: tempURL) else {
+                    return .failed("Dataset unreadable")
+                }
+                counts = candidate.counts()
+            }
+            guard counts.brands == remote.brands, counts.barcodes == remote.barcodes else {
+                return .failed("Dataset counts mismatch")
+            }
+
+            // 5. Install atomically.
             try DatasetStore.install(sqlite: tempURL, manifest: remote, in: configuration.store)
             return .updated(remote)
         } catch {
