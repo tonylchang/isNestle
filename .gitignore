@@ -1,5 +1,9 @@
 .env
 
+# Python tooling
+__pycache__/
+*.py[cod]
+
 # Xcode / build
 DerivedData/
 build/

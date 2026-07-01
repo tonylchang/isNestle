@@ -35,7 +35,7 @@ Run a device smoke test before upload:
 - Online lookup is off by default.
 - Turning online lookup on sends only unknown local misses to Open Food Facts.
 - Settings shows the current dataset version and counts.
-- Privacy policy link opens `https://tonylchang.github.io/isNestle/`.
+- Privacy policy link opens `https://tonylchang.github.io/isNestle/privacy.html`.
 
 ## Xcode Cloud
 
@@ -64,8 +64,21 @@ python3 scripts/verify_release_assets.py
 
 ## App Store Privacy
 
-The expected privacy label is "Data Not Collected" for this app. If optional
-online lookup remains enabled only by user choice and only contacts Open Food
-Facts directly, disclose that third-party request in the privacy policy without
-marking it as data collected by this app.
+App Store Connect requires a privacy policy URL and privacy-practice answers for
+iOS apps. Use:
 
+- Privacy policy URL: `https://tonylchang.github.io/isNestle/privacy.html`.
+- Privacy policy source: `docs/privacy.html`.
+- Questionnaire stance: the app itself does not collect data, track users, run
+  analytics, or store scan history.
+- Optional online lookup: remains off by default and sends unresolved barcodes
+  directly to Open Food Facts only after the user enables it. Keep the privacy
+  policy and App Store privacy answers aligned with Apple's current wording for
+  third-party data handling.
+
+Apple references:
+
+- App privacy details: <https://developer.apple.com/app-store/app-privacy-details/>.
+- Manage app privacy: <https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/>.
+- TestFlight test information: <https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-test-information>.
+- Export compliance: <https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations>.

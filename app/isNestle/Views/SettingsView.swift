@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var model: AppModel
 
-    private static let privacyURL = URL(string: "https://tonylchang.github.io/isNestle/")!
+    private static let privacyURL = URL(string: "https://tonylchang.github.io/isNestle/privacy.html")!
 
     var body: some View {
         let counts = model.db?.counts() ?? (brands: 0, barcodes: 0)
