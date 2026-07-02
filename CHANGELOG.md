@@ -21,6 +21,10 @@ Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.jso
   lookup lifecycle, daily update-check throttle) via injectable dependencies.
 - Offline unit tests for the pipeline's parsing/normalization functions
   (`test_parsing.py`), run in CI before each dataset build.
+- Dataset updates are now authenticated: the daily workflow signs
+  `manifest.json` (Ed25519) and the app refuses to install a dataset whose
+  manifest isn't signed by a trusted key baked into the binary (primary +
+  offline standby for rotation). GitHub Actions are pinned by commit SHA.
 
 ### Fixed
 

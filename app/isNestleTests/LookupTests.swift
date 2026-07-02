@@ -101,56 +101,44 @@ final class LookupTests: XCTestCase {
         XCTAssertEqual(DatasetStore.activeDatabaseURL(in: config), config.bundledDatabaseURL)
     }
 
-    func testDatasetUpdaterInstallsNewerVerifiedDataset() async throws {
+    func testDatasetUpdaterInstallsNewerSignedVerifiedDataset() async throws {
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
-        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
-        let sqliteURL = try XCTUnwrap(URL(string: "https://example.com/isnestle.sqlite"))
         let sqliteData = try makeSQLiteFixture()
-        let remote = manifest(version: "2026.07.01.0617",
-                              sqliteURL: sqliteURL.absoluteString,
-                              sqliteData: sqliteData,
-                              brands: fixtureBrandCount,
-                              barcodes: fixtureBarcodeCount)
+        let remote = try sign(manifest(version: "2026.07.01.0617",
+                                       sqliteData: sqliteData,
+                                       brands: fixtureBrandCount,
+                                       barcodes: fixtureBarcodeCount))
         let downloadURL = try tempFile(data: sqliteData)
 
-        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
-            remoteManifestURL: remoteURL,
-            store: config,
-            data: { req in
-                XCTAssertEqual(req.url, remoteURL)
-                return (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL))
-            },
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote,
             download: { req in
-                XCTAssertEqual(req.url, sqliteURL)
-                return (downloadURL, self.httpResponse(for: sqliteURL))
+                XCTAssertEqual(req.url?.absoluteString, remote.manifest.sqlite_url)
+                return (downloadURL, self.httpResponse(for: try XCTUnwrap(req.url)))
             }
         ))
 
-        XCTAssertEqual(result, .updated(remote))
-        XCTAssertEqual(DatasetStore.activeManifest(in: config), remote)
+        XCTAssertEqual(result, .updated(remote.manifest))
+        XCTAssertEqual(DatasetStore.activeManifest(in: config), remote.manifest)
         XCTAssertEqual(try Data(contentsOf: config.downloadedDatabaseURL), sqliteData)
     }
 
     func testDatasetUpdaterRejectsChecksumMismatch() async throws {
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
-        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
-        let sqliteURL = try XCTUnwrap(URL(string: "https://example.com/isnestle.sqlite"))
         let sqliteData = Data("tampered sqlite data".utf8)
-        let remote = DatasetManifest(version: "2026.07.01.0617",
-                                     sqlite_url: sqliteURL.absoluteString,
-                                     sqlite_sha256: String(repeating: "0", count: 64),
-                                     sqlite_bytes: sqliteData.count,
-                                     brands: 601,
-                                     barcodes: 33424)
+        let remote = try sign(DatasetManifest(version: "2026.07.01.0617",
+                                              sqlite_url: "https://example.com/isnestle.sqlite",
+                                              sqlite_sha256: String(repeating: "0", count: 64),
+                                              sqlite_bytes: sqliteData.count,
+                                              brands: 601,
+                                              barcodes: 33424))
         let downloadURL = try tempFile(data: sqliteData)
 
-        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
-            remoteManifestURL: remoteURL,
-            store: config,
-            data: { _ in (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL)) },
-            download: { _ in (downloadURL, self.httpResponse(for: sqliteURL)) }
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote,
+            download: { _ in (downloadURL, self.httpResponse(for: Self.testManifestURL)) }
         ))
 
         XCTAssertEqual(result, .failed("Checksum mismatch"))
@@ -162,16 +150,13 @@ final class LookupTests: XCTestCase {
         // must be rejected by the health check, not installed.
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
-        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
         let sqliteData = Data("checksummed but not a database".utf8)
-        let remote = manifest(version: "2026.07.01.0617", sqliteData: sqliteData)
+        let remote = try sign(manifest(version: "2026.07.01.0617", sqliteData: sqliteData))
         let downloadURL = try tempFile(data: sqliteData)
 
-        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
-            remoteManifestURL: remoteURL,
-            store: config,
-            data: { _ in (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL)) },
-            download: { _ in (downloadURL, self.httpResponse(for: remoteURL)) }
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote,
+            download: { _ in (downloadURL, self.httpResponse(for: Self.testManifestURL)) }
         ))
 
         XCTAssertEqual(result, .failed("Dataset unreadable"))
@@ -182,21 +167,105 @@ final class LookupTests: XCTestCase {
         // A real database whose row counts don't match the manifest's claims.
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
-        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
         let sqliteData = try makeSQLiteFixture()
-        let remote = manifest(version: "2026.07.01.0617", sqliteData: sqliteData,
-                              brands: fixtureBrandCount + 5, barcodes: fixtureBarcodeCount)
+        let remote = try sign(manifest(version: "2026.07.01.0617", sqliteData: sqliteData,
+                                       brands: fixtureBrandCount + 5, barcodes: fixtureBarcodeCount))
         let downloadURL = try tempFile(data: sqliteData)
 
-        let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
-            remoteManifestURL: remoteURL,
-            store: config,
-            data: { _ in (try JSONEncoder().encode(remote), self.httpResponse(for: remoteURL)) },
-            download: { _ in (downloadURL, self.httpResponse(for: remoteURL)) }
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote,
+            download: { _ in (downloadURL, self.httpResponse(for: Self.testManifestURL)) }
         ))
 
         XCTAssertEqual(result, .failed("Dataset counts mismatch"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+    }
+
+    func testDatasetUpdaterRejectsMissingSignature() async throws {
+        // Newer manifest but the signature asset 404s — nothing may install.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let remote = try sign(manifest(version: "2026.07.01.0617"))
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote, signatureStatus: 404
+        ))
+
+        XCTAssertEqual(result, .failed("Signature missing"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+    }
+
+    func testDatasetUpdaterRejectsUntrustedSignature() async throws {
+        // Release tampering: manifest signed by a key the app doesn't trust.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let remote = try sign(manifest(version: "2026.07.01.0617"))
+        let attacker = Curve25519.Signing.PrivateKey()
+        let forged = try attacker.signature(for: remote.bytes)
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote, signatureData: forged
+        ))
+
+        XCTAssertEqual(result, .failed("Signature invalid"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: config.downloadedDatabaseURL.path))
+    }
+
+    func testDatasetUpdaterRejectsSignatureOverDifferentManifest() async throws {
+        // A genuine signature for some OTHER manifest must not authenticate this
+        // one (replaying a signature across releases).
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let remote = try sign(manifest(version: "2026.07.01.0617"))
+        let other = try sign(manifest(version: "2026.07.02.0617"), with: remote.signingKey)
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote, signatureData: other.signature
+        ))
+
+        XCTAssertEqual(result, .failed("Signature invalid"))
+    }
+
+    func testDatasetUpdaterAcceptsStandbyKeySignature() async throws {
+        // Rotation path: a manifest signed by the second trusted key installs.
+        let bundled = manifest(version: "2026.06.30.0302")
+        let config = try makeStoreConfiguration(bundled: bundled)
+        let sqliteData = try makeSQLiteFixture()
+        let standby = Curve25519.Signing.PrivateKey()
+        let remote = try sign(manifest(version: "2026.07.01.0617",
+                                       sqliteData: sqliteData,
+                                       brands: fixtureBrandCount,
+                                       barcodes: fixtureBarcodeCount),
+                              with: standby)
+        let retiredPrimary = Curve25519.Signing.PrivateKey().publicKey.rawRepresentation
+        let downloadURL = try tempFile(data: sqliteData)
+
+        let result = await DatasetUpdater.checkAndUpdate(configuration: updaterConfiguration(
+            store: config, remote: remote,
+            trustedKeys: [retiredPrimary, standby.publicKey.rawRepresentation],
+            download: { _ in (downloadURL, self.httpResponse(for: Self.testManifestURL)) }
+        ))
+
+        XCTAssertEqual(result, .updated(remote.manifest))
+    }
+
+    func testBakedInTrustedKeysAreWellFormed() {
+        // A typo in the hex constants must fail here, not at runtime.
+        let keys = DatasetManifest.trustedPublicKeys
+        XCTAssertEqual(keys.count, 2)
+        XCTAssertEqual(Set(keys).count, 2, "primary and standby must differ")
+        for key in keys {
+            XCTAssertEqual(key.count, 32)
+            XCTAssertNoThrow(try Curve25519.Signing.PublicKey(rawRepresentation: key))
+        }
+    }
+
+    func testDataHexEncodedInit() {
+        XCTAssertEqual(Data(hexEncoded: "00ff10"), Data([0x00, 0xff, 0x10]))
+        XCTAssertEqual(Data(hexEncoded: "ABCD"), Data([0xab, 0xcd]))
+        XCTAssertEqual(Data(hexEncoded: ""), Data())
+        XCTAssertNil(Data(hexEncoded: "abc"))     // odd length
+        XCTAssertNil(Data(hexEncoded: "zz"))      // not hex
     }
 
     func testOpenActiveDatabaseFallsBackToBundleWhenDownloadIsCorrupt() throws {
@@ -218,16 +287,22 @@ final class LookupTests: XCTestCase {
         XCTAssertEqual(DatasetStore.activeManifest(in: config), bundled)
     }
 
-    func testDatasetUpdaterSkipsDownloadWhenRemoteIsNotNewer() async throws {
+    func testDatasetUpdaterSkipsSignatureAndDownloadWhenRemoteIsNotNewer() async throws {
         let bundled = manifest(version: "2026.06.30.0302")
         let config = try makeStoreConfiguration(bundled: bundled)
-        let remoteURL = try XCTUnwrap(URL(string: "https://example.com/manifest.json"))
+        let remote = try sign(bundled)
         var downloadCalled = false
 
         let result = await DatasetUpdater.checkAndUpdate(configuration: .init(
-            remoteManifestURL: remoteURL,
+            remoteManifestURL: Self.testManifestURL,
+            remoteSignatureURL: Self.testSignatureURL,
+            trustedKeys: remote.trustedKeys,
             store: config,
-            data: { _ in (try JSONEncoder().encode(bundled), self.httpResponse(for: remoteURL)) },
+            data: { req in
+                XCTAssertEqual(req.url, Self.testManifestURL,
+                               "the signature must not be fetched on the up-to-date path")
+                return (remote.bytes, self.httpResponse(for: Self.testManifestURL))
+            },
             download: { _ in
                 downloadCalled = true
                 throw URLError(.badServerResponse)
@@ -249,6 +324,53 @@ final class LookupTests: XCTestCase {
                         sqlite_bytes: sqliteData.count,
                         brands: brands,
                         barcodes: barcodes)
+    }
+
+    private static let testManifestURL = URL(string: "https://example.com/manifest.json")!
+    private static let testSignatureURL = URL(string: "https://example.com/manifest.json.sig")!
+
+    /// A remote manifest plus the exact bytes the updater will see and their
+    /// Ed25519 signature — what the daily workflow publishes.
+    private struct SignedManifest {
+        let manifest: DatasetManifest
+        let bytes: Data
+        let signature: Data
+        let signingKey: Curve25519.Signing.PrivateKey
+        var trustedKeys: [Data] { [signingKey.publicKey.rawRepresentation] }
+    }
+
+    private func sign(_ manifest: DatasetManifest,
+                      with key: Curve25519.Signing.PrivateKey = .init()) throws -> SignedManifest {
+        let bytes = try JSONEncoder().encode(manifest)
+        return SignedManifest(manifest: manifest, bytes: bytes,
+                              signature: try key.signature(for: bytes), signingKey: key)
+    }
+
+    /// Updater configuration serving a signed remote manifest; the signature
+    /// response is overridable to simulate tampering or a missing asset.
+    private func updaterConfiguration(store: DatasetStoreConfiguration,
+                                      remote: SignedManifest,
+                                      trustedKeys: [Data]? = nil,
+                                      signatureData: Data? = nil,
+                                      signatureStatus: Int = 200,
+                                      download: @escaping (URLRequest) async throws -> (URL, URLResponse) = { _ in
+                                          throw URLError(.badServerResponse)
+                                      }) -> DatasetUpdater.Configuration {
+        .init(
+            remoteManifestURL: Self.testManifestURL,
+            remoteSignatureURL: Self.testSignatureURL,
+            trustedKeys: trustedKeys ?? remote.trustedKeys,
+            store: store,
+            data: { req in
+                if req.url == Self.testManifestURL {
+                    return (remote.bytes, self.httpResponse(for: Self.testManifestURL))
+                }
+                XCTAssertEqual(req.url, Self.testSignatureURL)
+                return (signatureData ?? remote.signature,
+                        self.httpResponse(for: Self.testSignatureURL, status: signatureStatus))
+            },
+            download: download
+        )
     }
 
     private func makeStoreConfiguration(bundled: DatasetManifest,

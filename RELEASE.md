@@ -63,6 +63,42 @@ python3 scripts/verify_release_assets.py
   must be `YYYY.MM.DD.HHMM`.
 - App releases are documented in `CHANGELOG.md`; daily dataset changes are not.
 
+## Dataset Signing & Key Management
+
+The daily workflow signs `manifest.json` (Ed25519) and the app only installs
+datasets whose manifest verifies against a trusted public key baked into
+`DatasetManifest.trustedPublicKeys` (primary + standby).
+
+Where things live:
+
+- **Primary private key** — GitHub environment secret `DATASET_SIGNING_KEY` in
+  the `dataset-publish` environment (deployments restricted to `main`), plus a
+  copy in the password manager.
+- **Standby private key** — password manager **only**, never in GitHub. This is
+  what makes rotation survive a GitHub account compromise.
+- **Public keys (hex)** — baked into the app *and* listed in the workflow's
+  `TRUSTED_PUBLIC_KEYS` (the sign step refuses to sign with an unrecognized key).
+
+Rotation runbook (suspected primary-key leak):
+
+1. Swap the secret to the standby key — shipped apps already trust it:
+   `gh secret set DATASET_SIGNING_KEY --env dataset-publish --repo tonylchang/isNestle < isnestle-signing-standby.pem`
+2. Generate a fresh standby (`openssl genpkey -algorithm ed25519`), store the
+   PEM in the password manager only.
+3. In the next app release: add the new standby's public key to
+   `DatasetManifest.trustedPublicKeys` and the workflow's `TRUSTED_PUBLIC_KEYS`,
+   and drop the leaked key from both.
+
+Verify a published release locally:
+
+```bash
+gh release download dataset-latest -p 'manifest.json*' --clobber
+printf '302a300506032b6570032100cc8c8947d16d824d37f84579a587fdf720c1ac83336f503748c9963a1b39bff9' \
+  | xxd -r -p > /tmp/isnestle-pub.der
+openssl pkeyutl -verify -pubin -keyform DER -inkey /tmp/isnestle-pub.der \
+  -rawin -in manifest.json -sigfile manifest.json.sig
+```
+
 ## App Store Privacy
 
 App Store Connect requires a privacy policy URL and privacy-practice answers for

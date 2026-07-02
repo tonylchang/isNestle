@@ -69,3 +69,8 @@ Before publishing, the workflow runs `check_counts.py` against the previously
 published manifest and **fails if brands or barcodes shrank more than 10%** —
 a degraded source (OFF search flake, Wikipedia format drift) shrinks the output
 rather than erroring, and this guard keeps such a build from shipping to users.
+
+The workflow also **signs `manifest.json`** (Ed25519, key in the
+`dataset-publish` environment secret) and publishes the detached
+`manifest.json.sig`; the app refuses to install a dataset whose manifest isn't
+signed by a baked-in trusted key. See `RELEASE.md` for key management.

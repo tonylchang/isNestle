@@ -35,6 +35,13 @@ Two separate pipelines:
   the manifest **daily**; if the version bumped, it downloads the new SQLite and
   swaps it in locally. This is a plain static file `GET` — no backend, no database
   server, no telemetry.
+- **Update authenticity: Ed25519-signed manifest.** The workflow signs the
+  published `manifest.json` with a key held in a GitHub environment secret
+  (`dataset-publish`, restricted to `main`); the app verifies the signature
+  against public keys baked into the binary (primary + offline standby for
+  rotation) before installing anything. The manifest carries the SQLite's
+  SHA-256, so the one signature authenticates the whole update. Key management
+  runbook: `RELEASE.md`.
 - **ODbL publication:** GitHub Releases doubles as the public download point for
   the derived dataset, satisfying the ODbL share-alike obligation (see
   `CONSTRAINTS.md`).
