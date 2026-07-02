@@ -41,6 +41,8 @@ Both halves of the pipeline import `common.py` so they cannot drift:
 | `build_barcodes.py` | barcode pipeline | `out/barcodes.csv` (barcode, brand_slug, source) |
 | `build_db.py` | assembly | `out/isnestle.sqlite` (both tables) |
 | `test_spike.py` | validation | PASS/FAIL + normalization match-rate report |
+| `test_parsing.py` | unit tests | offline tests for the parsing/normalization functions |
+| `check_counts.py` | publish guard | fails CI if counts shrank >10% vs the last release |
 
 ## Run
 

@@ -26,6 +26,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Unit-test parsing functions
+        working-directory: data-pipeline
+        run: python3 test_parsing.py
+
       - name: Build dataset (brands -> barcodes -> sqlite)
         working-directory: data-pipeline
         run: |

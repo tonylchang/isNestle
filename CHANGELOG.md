@@ -17,6 +17,15 @@ Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.jso
   daily check re-downloads) if the stored dataset is unreadable at launch.
 - Daily pipeline now refuses to publish a dataset whose brand/barcode counts
   shrank more than 10% versus the previous release (`check_counts.py`).
+- Behavior tests for `AppModel` (online-fallback verdicts, stale-result guard,
+  lookup lifecycle, daily update-check throttle) via injectable dependencies.
+- Offline unit tests for the pipeline's parsing/normalization functions
+  (`test_parsing.py`), run in CI before each dataset build.
+
+### Fixed
+
+- A stale online lookup completing after a newer scan no longer clears the
+  newer lookup's "checking…" indicator.
 
 ### Changed
 

@@ -12,6 +12,27 @@ enum DatasetUpdateState: Equatable {
 
 @MainActor
 final class AppModel: ObservableObject {
+    /// Injectable dependencies (network, database, persistence) so the model's
+    /// logic — verdict application, stale-result guard, update throttling — is
+    /// testable without the live bundle, OFF API, or standard defaults.
+    struct Configuration {
+        var openDatabase: () -> BarcodeDatabase?
+        var resolveOnline: (String) async -> OnlineLookup.Hit?
+        var checkAndUpdate: () async -> DatasetUpdater.Result
+        var defaults: UserDefaults
+
+        static var live: Configuration {
+            Configuration(
+                openDatabase: { DatasetStore.openActiveDatabase() },
+                resolveOnline: { await OnlineLookup.resolve(barcode: $0) },
+                checkAndUpdate: { await DatasetUpdater.checkAndUpdate() },
+                defaults: .standard
+            )
+        }
+    }
+
+    private let configuration: Configuration
+
     /// Reopened after a dataset self-update, so it's a var (not let).
     private(set) var db: BarcodeDatabase?
 
@@ -28,23 +49,26 @@ final class AppModel: ObservableObject {
     var datasetVersion: String { DatasetStore.activeManifest?.version ?? "unknown" }
     /// Opt-in online fallback; persisted, off by default.
     @Published var onlineEnabled: Bool {
-        didSet { UserDefaults.standard.set(onlineEnabled, forKey: Self.onlineKey) }
+        didSet { configuration.defaults.set(onlineEnabled, forKey: Self.onlineKey) }
     }
     /// Active verdict theme; persisted, defaults to Minimal.
     @Published var theme: AppTheme {
-        didSet { UserDefaults.standard.set(theme.rawValue, forKey: Self.themeKey) }
+        didSet { configuration.defaults.set(theme.rawValue, forKey: Self.themeKey) }
     }
 
     private static let onlineKey = "onlineLookupEnabled"
     private static let themeKey = "appTheme"
     private static let lastUpdateCheckKey = "lastDatasetUpdateCheckDate"
-    private var lookupTask: Task<Void, Never>?
+    /// In-flight tasks, exposed read-only so tests can await them.
+    private(set) var lookupTask: Task<Void, Never>?
+    private(set) var updateCheckTask: Task<Void, Never>?
 
-    init() {
-        db = DatasetStore.openActiveDatabase()
+    init(configuration: Configuration = .live) {
+        self.configuration = configuration
+        db = configuration.openDatabase()
         target = db?.activeTarget() ?? .defaultTarget
-        onlineEnabled = UserDefaults.standard.bool(forKey: Self.onlineKey)
-        theme = AppTheme(rawValue: UserDefaults.standard.string(forKey: Self.themeKey) ?? "") ?? .minimal
+        onlineEnabled = configuration.defaults.bool(forKey: Self.onlineKey)
+        theme = AppTheme(rawValue: configuration.defaults.string(forKey: Self.themeKey) ?? "") ?? .minimal
         #if DEBUG
         // Dev hook: `-demoBarcode <code>` runs a full scan (including the online
         // path when online lookup is enabled) for screenshots / manual testing.
@@ -53,7 +77,7 @@ final class AppModel: ObservableObject {
             handleScanned(CommandLine.arguments[i + 1])
         }
         #endif
-        Task { await checkForDatasetUpdate() }   // daily self-update check on launch
+        updateCheckTask = Task { await checkForDatasetUpdate() }   // daily self-update check on launch
     }
 
     /// Check the rolling release for a newer dataset; reopen the DB if installed.
@@ -61,13 +85,13 @@ final class AppModel: ObservableObject {
         guard updateState != .checking else { return }
         guard force || shouldCheckDatasetToday() else { return }
         updateState = .checking
-        switch await DatasetUpdater.checkAndUpdate() {
+        switch await configuration.checkAndUpdate() {
         case .upToDate:
             markDatasetUpdateChecked()
             updateState = .upToDate
         case .updated(let m):
             markDatasetUpdateChecked()
-            db = DatasetStore.openActiveDatabase()   // reopen the freshly installed file
+            db = configuration.openDatabase()   // reopen the freshly installed file
             target = db?.activeTarget() ?? .defaultTarget
             updateState = .updated(m.version)
         case .failed(let why):
@@ -76,14 +100,14 @@ final class AppModel: ObservableObject {
     }
 
     private func shouldCheckDatasetToday(now: Date = Date()) -> Bool {
-        guard let last = UserDefaults.standard.object(forKey: Self.lastUpdateCheckKey) as? Date else {
+        guard let last = configuration.defaults.object(forKey: Self.lastUpdateCheckKey) as? Date else {
             return true
         }
         return !Calendar.current.isDate(last, inSameDayAs: now)
     }
 
     private func markDatasetUpdateChecked(now: Date = Date()) {
-        UserDefaults.standard.set(now, forKey: Self.lastUpdateCheckKey)
+        configuration.defaults.set(now, forKey: Self.lastUpdateCheckKey)
     }
 
     func handleScanned(_ barcode: String) {
@@ -97,14 +121,16 @@ final class AppModel: ObservableObject {
         guard local.verdict == .unknown, onlineEnabled else { return }
         isLookingUp = true
         lookupTask = Task { [weak self] in
-            let hit = await OnlineLookup.resolve(barcode: barcode)
+            guard let resolve = self?.configuration.resolveOnline else { return }
+            let hit = await resolve(barcode)
             self?.applyOnline(hit, for: barcode)
         }
     }
 
     private func applyOnline(_ hit: OnlineLookup.Hit?, for barcode: String) {
+        guard result?.query == barcode else { return }   // user moved on; a stale
+        // completion must not touch state (incl. a newer lookup's spinner)
         isLookingUp = false
-        guard result?.query == barcode else { return }   // user moved on; ignore
         guard let hit else { return }                     // network/parse failed; keep local result
         if let match = db?.matchTargetBrand(slugs: hit.brandSlugs) {
             result = OwnershipResult(query: barcode, brandName: match.brandName, parent: match.parent,

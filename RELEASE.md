@@ -9,6 +9,7 @@ From the repo root:
 ```bash
 python3 scripts/verify_release_assets.py
 python3 data-pipeline/test_spike.py
+(cd data-pipeline && python3 test_parsing.py)
 ```
 
 From `app/`, regenerate the Xcode project after adding or moving Swift files:

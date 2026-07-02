@@ -139,6 +139,17 @@ def fetch_wikidata() -> tuple[list[str], list[str]]:
         notes.append("wikidata: UNAVAILABLE — continuing without it")
         return [], notes
 
+    names, excluded = _labels_from_sparql(data)
+    notes.append(f"wikidata: {len(names)} labels (excluded {excluded} minority/divested roots)")
+    return names, notes
+
+
+def _labels_from_sparql(data: dict) -> tuple[list[str], int]:
+    """Extract usable brand labels from a WDQS JSON response (pure, testable).
+
+    Returns (labels, excluded_count). Skips empty labels, items whose label is
+    just their own QID (un-labelled), and the minority/divested exclusion roots.
+    """
     names: list[str] = []
     excluded = 0
     for b in data.get("results", {}).get("bindings", []):
@@ -155,8 +166,7 @@ def fetch_wikidata() -> tuple[list[str], list[str]]:
             excluded += 1
             continue
         names.append(label)
-    notes.append(f"wikidata: {len(names)} labels (excluded {excluded} minority/divested roots)")
-    return names, notes
+    return names, excluded
 
 
 # --- Wikipedia "List of Nestlé brands" ---------------------------------------
@@ -202,30 +212,15 @@ def _heading(line: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
-def fetch_wikipedia() -> tuple[list[str], list[str]]:
-    """Return (brand_names, notes). Never raises."""
-    notes: list[str] = []
-    try:
-        data = http_get_json(
-            WIKIPEDIA_API,
-            {"action": "parse", "page": WIKIPEDIA_PAGE,
-             "prop": "wikitext", "format": "json", "redirects": "1"},
-            timeout=45,
-        )
-    except Exception as exc:  # noqa: BLE001
-        notes.append(f"wikipedia: UNAVAILABLE — {exc!r}")
-        return [], notes
+def _brands_from_wikitext(wt: str) -> list[str]:
+    """Extract current-brand names from the page's raw wikitext (pure, testable).
 
-    if "parse" not in data:
-        notes.append(f"wikipedia: no 'parse' in response ({list(data)}) — skipping")
-        return [], notes
-
-    wt = data["parse"]["wikitext"]["*"]
+    Collects only the "current brands" region: from the first content heading
+    ("Beverages") up to "As shareholder" (minority stakes) / "Former brands"
+    (divested) — those are NOT currently made by Nestlé.
+    """
     lines = wt.splitlines()
 
-    # Collect only the "current brands" region: from the first content heading
-    # ("Beverages") up to "As shareholder" (minority stakes) / "Former brands"
-    # (divested) — those are NOT currently made by Nestlé.
     def find(name: str, default: int) -> int:
         for i, ln in enumerate(lines):
             if _heading(ln) == name:
@@ -253,7 +248,28 @@ def fetch_wikipedia() -> tuple[list[str], list[str]]:
         opens = len(re.findall(r"<ref(?:\s[^>]*)?>", ln)) - len(re.findall(r"<ref[^>]*?/>", ln))
         if opens > ln.count("</ref>"):
             in_ref = True
+    return names
 
+
+def fetch_wikipedia() -> tuple[list[str], list[str]]:
+    """Return (brand_names, notes). Never raises."""
+    notes: list[str] = []
+    try:
+        data = http_get_json(
+            WIKIPEDIA_API,
+            {"action": "parse", "page": WIKIPEDIA_PAGE,
+             "prop": "wikitext", "format": "json", "redirects": "1"},
+            timeout=45,
+        )
+    except Exception as exc:  # noqa: BLE001
+        notes.append(f"wikipedia: UNAVAILABLE — {exc!r}")
+        return [], notes
+
+    if "parse" not in data:
+        notes.append(f"wikipedia: no 'parse' in response ({list(data)}) — skipping")
+        return [], notes
+
+    names = _brands_from_wikitext(data["parse"]["wikitext"]["*"])
     notes.append(f"wikipedia: {len(names)} brand names from current-brand sections")
     return names, notes
 
