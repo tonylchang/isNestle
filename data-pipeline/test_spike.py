@@ -36,8 +36,18 @@ MIN_BRANDS = 500
 MIN_MATCHED_BRAND_SLUGS = 250
 MIN_BARCODES = 10000
 
-# Real NON-Nestlé barcode CONFIRMED via Search-a-licious: brands_tags == ['coca-cola'].
+# Real NON-Nestlé barcodes that must NEVER resolve as a Nestlé match.
+#   - Coca-Cola: an unrelated competitor (brands_tags == ['coca-cola']).
+#   - L'Oréal: Nestlé holds only a MINORITY stake — its products are not "made
+#     by Nestlé." These guard the WDQS-outage failure mode where the pipeline
+#     would otherwise import the whole L'Oréal/Sanofi/Alcon closure as false
+#     Nestlé brands (see build_brands.fetch_wikidata / DENY_SLUGS).
 NON_NESTLE = ("7702535016688", "Coca-Cola Fuze Tea (coca-cola)")
+NON_NESTLE_ANCHORS = [
+    ("7702535016688", "Coca-Cola Fuze Tea (competitor)"),
+    ("0065338054743", "L'Oréal Paris (Nestlé minority stake, not a subsidiary)"),
+    ("3600523970177", "L'Oréal Paris Elvive (minority stake)"),
+]
 
 # Offline W3 anchors: the curated false-positive rules must be shipped in SQLite.
 EXPECTED_EXCEPTIONS = [
@@ -128,15 +138,20 @@ def main() -> int:
             f"(need >= {MIN_NESTLE_PASS})"
         )
 
-    # --- Negative: a non-Nestlé barcode must NOT match -----------------------
-    print("\n== Non-Nestlé barcode (expect Unknown / no match) ==")
-    barcode, desc = NON_NESTLE
-    row = lookup(conn, barcode)
-    if row is None:
-        print(f"  PASS  {barcode}  -> Unknown   [{desc}]")
-    else:
-        print(f"  FAIL  {barcode}  -> {row[0]} / {row[1]}   [{desc}] (should be Unknown)")
-        failures.append(f"non-Nestlé barcode {barcode} unexpectedly matched {row[1]}")
+    # --- Negative: non-Nestlé barcodes must NOT resolve as a match -----------
+    # A match here means either a competitor leaked in or (the L'Oréal anchors)
+    # the WDQS-outage contamination shipped. Either is a hard failure.
+    print("\n== Non-Nestlé barcodes (expect no match) ==")
+    for barcode, desc in NON_NESTLE_ANCHORS:
+        row = lookup(conn, barcode)
+        if row is None:
+            print(f"  PASS  {barcode}  -> Unknown   [{desc}]")
+        elif int(row[2]) == 1:
+            print(f"  FAIL  {barcode}  -> {row[0]} / {row[1]}   [{desc}] (should NOT be a target match)")
+            failures.append(f"non-Nestlé barcode {barcode} matched target {row[1]} (brand {row[0]}) — [{desc}]")
+        else:
+            # Present but explicitly not-target (e.g. a reattributed exception) is fine.
+            print(f"  PASS  {barcode}  -> {row[0]} / {row[1]} / is_target={row[2]}   [{desc}]")
 
     # --- W3 false-positive curation rules are present in the shipped DB ------
     print("\n== False-positive curation rules (expect cited seed rules) ==")

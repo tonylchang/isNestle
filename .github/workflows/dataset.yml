@@ -39,7 +39,10 @@ jobs:
         run: |
           python3 build_brands.py
           python3 reconcile_brands.py --refresh-facets
-          python3 build_barcodes.py
+          # API mode until the bulk-dump parser is verified: dump mode currently
+          # under-collects (misses the Aero/Milkybar anchors), which the spike
+          # correctly rejects. Dump mode stays available via `--mode dump`.
+          python3 build_barcodes.py --mode api
           python3 build_prefixes.py
           python3 build_db.py
 

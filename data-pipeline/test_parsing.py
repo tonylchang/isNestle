@@ -173,6 +173,52 @@ class LabelsFromSparqlTests(unittest.TestCase):
             {"results": {"bindings": [{}]}}), ([], 0))
 
 
+class FetchWikidataFallbackTests(unittest.TestCase):
+    """The exclusion query is the only trusted source; a failure must drop
+    Wikidata, never fall back to the unpruned plain graph (which would import
+    L'Oréal/Sanofi/Alcon as false Nestlé brands — a live incident on 2026-07-02)."""
+
+    def setUp(self):
+        self._orig = build_brands.http_get_json
+
+    def tearDown(self):
+        build_brands.http_get_json = self._orig
+
+    def test_only_the_rich_exclusion_query_is_issued(self):
+        queries = []
+
+        def fake_get(url, params=None, **kwargs):
+            queries.append(params["query"])
+            return {"results": {"bindings": [
+                {"itemLabel": {"value": "KitKat"},
+                 "item": {"value": "http://www.wikidata.org/entity/Q1"}},
+            ]}}
+
+        build_brands.http_get_json = fake_get
+        names, _notes = build_brands.fetch_wikidata()
+        self.assertEqual(names, ["KitKat"])
+        self.assertEqual(len(queries), 1)
+        self.assertIn("FILTER NOT EXISTS", queries[0],
+                      "the single query must be the subtree-excluding one")
+
+    def test_failure_drops_wikidata_without_plain_fallback(self):
+        calls = []
+
+        def failing_get(url, params=None, **kwargs):
+            calls.append(params["query"])
+            raise RuntimeError("WDQS 429 rate limited")
+
+        build_brands.http_get_json = failing_get
+        names, notes = build_brands.fetch_wikidata()
+        self.assertEqual(names, [], "a failed exclusion query must yield no Wikidata brands")
+        self.assertEqual(len(calls), 1, "must not retry with an unpruned plain query")
+        self.assertTrue(any("dropped" in n for n in notes))
+
+    def test_denylist_blocks_loreal_family_slugs(self):
+        for slug in ("l-oreal-paris", "biotherm", "aesop", "sanofi-pasteur"):
+            self.assertIn(slug, build_brands.DENY_SLUGS)
+
+
 class ReadBrandSlugsTests(unittest.TestCase):
     def test_dedupes_preserving_order_and_skips_blanks(self):
         with tempfile.TemporaryDirectory() as tmp:

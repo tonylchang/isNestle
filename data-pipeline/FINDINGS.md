@@ -65,6 +65,32 @@ The eventual data model may need to represent "made by X, in region Y."
   window**. The full OFF bulk dump remains the eventual production source (see
   `INFRA.md`) for products beyond what Search-a-licious returns (e.g. pet care).
 
+## Incident 2026-07-02 — WDQS outage → L'Oréal contamination (fixed)
+
+A dispatched build exposed a real defect. WDQS rate-limited the **rich
+(subtree-excluding) SPARQL query** (HTTP 429, "active wdqs outage"), and the
+pipeline fell back to the **plain transitive query**, which applies **no**
+minority-stake/divested exclusion. That imported the entire L'Oréal / Sanofi /
+Alcon ownership closure as `is_target=1` "Nestlé" brands. The per-slug denylist
+only caught a hardcoded handful, so `l-oreal-paris` (184 barcodes), `biotherm`
+(20), `l-oreal-professionnel` (14), `cadum`, `aesop`, … shipped in release
+`2026.07.02.0217` — a false-positive/defamation problem, since L'Oréal is a
+Nestlé **minority stake**, not a subsidiary.
+
+Fixes:
+- **`fetch_wikidata` now uses ONLY the exclusion query** — no unpruned plain
+  fallback. If WDQS is unavailable, Wikidata is dropped for the run (degrade to
+  Wikipedia + curated, the known-clean baseline). A smaller clean list beats a
+  larger contaminated one; `check_counts.py` + the anchors below catch a shrink.
+- **L'Oréal negative anchors in `test_spike.py`** — known L'Oréal barcodes must
+  never resolve as a target match, so a contaminated brand list can't publish.
+- Broadened `DENY_SLUGS` (belt-and-suspenders only).
+
+Separately, **dump mode under-collected** (8,425 OFF barcodes vs ~25k via the
+API; missed the Aero/Milkybar anchors), so the spike correctly blocked it. The
+daily workflow reverted to `--mode api` until the bulk-dump parser is fixed
+(likely a `brands_tags` column-format mismatch in the CSV export — to diagnose).
+
 ## Implications for the build
 
 - Treat the brand list as **brands, not products/patents**, with explicit

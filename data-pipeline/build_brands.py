@@ -48,11 +48,27 @@ WIKIDATA_EXCLUDE_QIDS = {
 
 # Belt-and-suspenders denylist applied to *every* source by slug, in case the
 # Wikidata in-query exclusion is bypassed (e.g. the fallback plain query runs).
+# NOTE: this is only belt-and-suspenders. The real protection is that
+# fetch_wikidata uses ONLY the subtree-excluding query (no unpruned fallback);
+# a per-slug denylist can never be exhaustive for whole corporate empires.
 DENY_SLUGS = {
-    "loreal", "l-oreal", "loreal-paris", "garnier", "maybelline", "lancome",
-    "urban-decay", "kiehl-s", "redken", "kerastase", "la-roche-posay", "vichy",
-    "cerave", "nyx", "essie", "the-body-shop", "body-shop", "yves-saint-laurent",
-    "galderma", "cetaphil", "alcon", "sanofi", "novartis", "sanofi-aventis",
+    # L'Oréal (Nestlé holds only a minority stake — not "made by Nestlé")
+    "loreal", "l-oreal", "loreal-paris", "l-oreal-paris", "l-oreal-professionnel",
+    "l-oreal-usa", "l-oreal-baltic", "l-oreal-foundation",
+    "garnier", "maybelline", "lancome", "urban-decay", "kiehl-s", "redken",
+    "kerastase", "la-roche-posay", "vichy", "cerave", "nyx", "essie",
+    "the-body-shop", "body-shop", "yves-saint-laurent", "ysl-beauty",
+    "biotherm", "biolage", "cadum", "carita", "cacharel", "aesop",
+    "helena-rubinstein", "maison-margiela", "mizani", "matrix", "decleor",
+    "prada-beauty", "miu-miu", "valentino-beauty", "clarisonic", "skinceuticals",
+    "stylenanda", "youth-to-the-people", "takami", "yuesai", "mugler", "azzaro",
+    # Galderma / dermatology (divested JV)
+    "galderma", "cetaphil",
+    # Alcon / eye care (sold to Novartis)
+    "alcon", "novartis",
+    # Sanofi / pharma (not Nestlé-owned)
+    "sanofi", "sanofi-aventis", "sanofi-pasteur", "genzyme", "bioverativ",
+    "regeneron-pharmaceuticals", "opella",
 }
 
 # Wikidata's P176 ("manufacturer") edge drags in Nestlé's *patent portfolio* as
@@ -101,42 +117,35 @@ def _sparql_rich() -> str:
     )
 
 
-def _sparql_plain() -> str:
-    return (
-        "SELECT DISTINCT ?item ?itemLabel WHERE {\n"
-        f"  ?item {_PATH}+ wd:{WIKIDATA_NESTLE_QID} .\n"
-        '  ?item rdfs:label ?itemLabel . FILTER(LANG(?itemLabel) = "en")\n'
-        "}"
-    )
-
-
 def fetch_wikidata() -> tuple[list[str], list[str]]:
-    """Return (brand_names, notes). Never raises — resilient by contract."""
+    """Return (brand_names, notes). Never raises — resilient by contract.
+
+    ONLY the rich, subtree-excluding query is used. There is deliberately no
+    plain-query fallback: the plain transitive closure pulls in Nestlé's
+    minority-stake and divested empires (L'Oréal, Sanofi, Alcon, …) as if they
+    were Nestlé brands, and the slug denylist alone does not catch them
+    (l-oreal-paris, biotherm, aesop, …). If the exclusion query is unavailable
+    (e.g. WDQS is rate-limiting during an outage), we drop Wikidata for this run
+    and fall back to the Wikipedia + curated sources only — a smaller but clean
+    brand list beats a larger contaminated one. A shrunk run is then caught by
+    check_counts.py and the L'Oréal negative anchors in test_spike.py.
+    """
     notes: list[str] = []
-    data = None
-    # Try the rich (subtree-excluding) query first; on any failure fall back to
-    # the proven plain transitive query so a SPARQL quirk doesn't lose Wikidata.
-    for label, builder in (("rich", _sparql_rich), ("plain", _sparql_plain)):
-        try:
-            # WDQS may be under an active-outage rule that rate-limits to
-            # ~1 req/min. Default backoff retries all land inside the same
-            # blocked minute, so wait out the window (~65s) between attempts.
-            data = http_get_json(
-                WIKIDATA_SPARQL,
-                {"query": builder(), "format": "json"},
-                timeout=90,
-                retries=3,
-                backoff=65,
-            )
-            if label == "plain":
-                notes.append("wikidata: rich query failed, used plain fallback "
-                             "(minority-stake subtrees pruned by slug denylist only)")
-            break
-        except Exception as exc:  # noqa: BLE001 — best-effort source
-            notes.append(f"wikidata: {label} query failed: {exc!r}")
-            data = None
-    if data is None:
-        notes.append("wikidata: UNAVAILABLE — continuing without it")
+    try:
+        # WDQS may be under an active-outage rule that rate-limits to ~1 req/min.
+        # Default backoff retries all land inside the same blocked minute, so
+        # wait out the window (~65s) between attempts, and try a few times.
+        data = http_get_json(
+            WIKIDATA_SPARQL,
+            {"query": _sparql_rich(), "format": "json"},
+            timeout=90,
+            retries=5,
+            backoff=65,
+        )
+    except Exception as exc:  # noqa: BLE001 — best-effort source
+        notes.append(f"wikidata: exclusion query UNAVAILABLE — {exc!r}")
+        notes.append("wikidata: dropped for this run (no unpruned fallback — "
+                     "would import L'Oréal/Sanofi/Alcon as false Nestlé brands)")
         return [], notes
 
     names, excluded = _labels_from_sparql(data)
