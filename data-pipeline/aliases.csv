@@ -1,0 +1,12 @@
+alias_slug,canonical_slug,note
+kit-kat,kitkat,OFF also stores KitKat with a hyphen
+coffeemate,coffee-mate,OFF/common spelling without hyphen
+s-pellegrino,san-pellegrino,Abbreviated San Pellegrino spelling
+sanpellegrino,san-pellegrino,OFF/common spelling without space
+purina-one,purina,Purina product-line tag
+purina-pro-plan,purina,Purina product-line tag
+milky-bar,milkybar,OFF/common spelling with space
+nestle-crunch,crunch,Nestle-prefixed Crunch tag
+nestle-toll-house,toll-house,Nestle-prefixed Toll House tag
+stouffers,stouffer-s,Possessive apostrophe is collapsed differently across sources
+blue-bottle-coffee,blue-bottle,Expanded Blue Bottle brand tag

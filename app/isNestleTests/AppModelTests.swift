@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import XCTest
 @testable import isNestle
 
@@ -42,6 +43,20 @@ final class AppModelTests: XCTestCase {
 
         XCTAssertEqual(model.result?.verdict, .unknown)
         XCTAssertFalse(model.result?.fromOnline ?? true)
+        XCTAssertFalse(model.isLookingUp)
+        XCTAssertNil(model.lookupTask)
+    }
+
+    func testOnlineFallbackDoesNotRunForNonBarcodePayload() {
+        let model = makeModel(resolveOnline: { _ in
+            XCTFail("online lookup must not run for non-product-barcode payloads")
+            return nil
+        })
+        model.onlineEnabled = true
+
+        model.handleScanned("https://example.com/not-a-product-code")
+
+        XCTAssertEqual(model.result?.verdict, .unknown)
         XCTAssertFalse(model.isLookingUp)
         XCTAssertNil(model.lookupTask)
     }
@@ -116,6 +131,49 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.result?.fromOnline ?? false)
     }
 
+    func testOnlineFallbackReattributesCoBrandException() async throws {
+        let db = try makeDatabase(exceptionAction: "reattribute",
+                                  actualMaker: "Hershey",
+                                  note: "US KitKat is made under license by Hershey.")
+        let model = makeModel(database: db, resolveOnline: { _ in
+            OnlineLookup.Hit(brandSlugs: ["kitkat", "hershey-s"], productName: "KitKat Bar",
+                             brandsDisplay: "KitKat, Hershey's", owner: "The Hershey Company")
+        })
+        model.onlineEnabled = true
+
+        model.handleScanned(unknownBarcode)
+        await model.lookupTask?.value
+
+        XCTAssertEqual(model.result?.verdict, .notTarget)
+        XCTAssertEqual(model.result?.brandName, "KitKat")
+        XCTAssertNil(model.result?.parent)
+        XCTAssertEqual(model.result?.manufacturer, "Hershey")
+        XCTAssertEqual(model.result?.note, "US KitKat is made under license by Hershey.")
+        XCTAssertEqual(model.result?.productName, "KitKat Bar")
+        XCTAssertTrue(model.result?.fromOnline ?? false)
+    }
+
+    func testOnlineFallbackExcludeExceptionStaysUnknown() async throws {
+        let db = try makeDatabase(exceptionAction: "exclude",
+                                  actualMaker: nil,
+                                  note: "US Smarties is an unrelated brand.")
+        let model = makeModel(database: db, resolveOnline: { _ in
+            OnlineLookup.Hit(brandSlugs: ["kitkat", "hershey-s"], productName: "Excluded Bar",
+                             brandsDisplay: "KitKat, Hershey's", owner: "Other Maker")
+        })
+        model.onlineEnabled = true
+
+        model.handleScanned(unknownBarcode)
+        await model.lookupTask?.value
+
+        XCTAssertEqual(model.result?.verdict, .unknown)
+        XCTAssertEqual(model.result?.brandName, "KitKat, Hershey's")
+        XCTAssertEqual(model.result?.productName, "Excluded Bar")
+        XCTAssertEqual(model.result?.manufacturer, "Other Maker")
+        XCTAssertEqual(model.result?.note, "US Smarties is an unrelated brand.")
+        XCTAssertTrue(model.result?.fromOnline ?? false)
+    }
+
     // MARK: Stale results and cancellation
 
     func testStaleOnlineResultIsIgnoredAfterANewerScan() async {
@@ -163,6 +221,30 @@ final class AppModelTests: XCTestCase {
         await gate.open()
         await model.lookupTask?.value
         XCTAssertFalse(model.isLookingUp)
+    }
+
+    func testOnlineResultIsIgnoredAfterLookupIsDisabled() async {
+        let gate = AsyncGate()
+        let model = makeModel(resolveOnline: { _ in
+            await gate.wait()
+            return OnlineLookup.Hit(brandSlugs: ["nestle"], productName: "Late Online Hit",
+                                    brandsDisplay: nil, owner: nil)
+        })
+        model.onlineEnabled = true
+
+        model.handleScanned(unknownBarcode)
+        let pending = model.lookupTask
+        XCTAssertTrue(model.isLookingUp)
+
+        model.onlineEnabled = false
+        XCTAssertFalse(model.isLookingUp)
+
+        await gate.open()
+        await pending?.value
+
+        XCTAssertEqual(model.result?.verdict, .unknown)
+        XCTAssertFalse(model.result?.fromOnline ?? true)
+        XCTAssertNil(model.result?.productName)
     }
 
     func testClearResetsResultAndPendingLookupIsDiscarded() async {
@@ -249,19 +331,22 @@ final class AppModelTests: XCTestCase {
 
     // MARK: Helpers
 
-    private func makeModel(defaults: UserDefaults? = nil,
+    private func makeModel(database: BarcodeDatabase? = nil,
+                           defaults: UserDefaults? = nil,
                            resolveOnline: @escaping (String) async -> OnlineLookup.Hit? = { _ in nil },
                            checkAndUpdate: @escaping () async -> DatasetUpdater.Result = { .upToDate }) -> AppModel {
-        AppModel(configuration: makeConfiguration(defaults: defaults,
+        AppModel(configuration: makeConfiguration(database: database,
+                                                  defaults: defaults,
                                                   resolveOnline: resolveOnline,
                                                   checkAndUpdate: checkAndUpdate))
     }
 
-    private func makeConfiguration(defaults: UserDefaults? = nil,
+    private func makeConfiguration(database: BarcodeDatabase? = nil,
+                                   defaults: UserDefaults? = nil,
                                    resolveOnline: @escaping (String) async -> OnlineLookup.Hit? = { _ in nil },
                                    checkAndUpdate: @escaping () async -> DatasetUpdater.Result = { .upToDate }) -> AppModel.Configuration {
         AppModel.Configuration(
-            openDatabase: { BarcodeDatabase() },   // real bundled dataset in the test host
+            openDatabase: { database ?? BarcodeDatabase() },   // real bundled dataset in the test host
             resolveOnline: resolveOnline,
             checkAndUpdate: checkAndUpdate,
             defaults: defaults ?? makeDefaults()
@@ -274,6 +359,62 @@ final class AppModelTests: XCTestCase {
         let defaults = UserDefaults(suiteName: name)!
         addTeardownBlock { UserDefaults(suiteName: name)?.removePersistentDomain(forName: name) }
         return defaults
+    }
+
+    private func makeDatabase(exceptionAction: String, actualMaker: String?, note: String) throws -> BarcodeDatabase {
+        let url = try tempDirectory().appendingPathComponent("fixture.sqlite")
+        var db: OpaquePointer?
+        defer { sqlite3_close(db) }
+        guard sqlite3_open(url.path, &db) == SQLITE_OK else {
+            throw NSError(domain: "AppModelTests", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "could not create fixture db"])
+        }
+
+        let sql = """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE exceptions (brand_slug TEXT, scope_type TEXT, scope_value TEXT,
+                                 actual_maker TEXT, action TEXT, note TEXT, source_url TEXT);
+        INSERT INTO brands VALUES ('kitkat', 'KitKat', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('1111111111111', 'kitkat', 'fixture');
+        """
+        guard sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK else {
+            throw NSError(domain: "AppModelTests", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "could not populate fixture db"])
+        }
+
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        let insert = "INSERT INTO exceptions VALUES ('kitkat', 'co_brand', 'hershey-s', ?, ?, ?, 'https://example.com');"
+        guard sqlite3_prepare_v2(db, insert, -1, &stmt, nil) == SQLITE_OK else {
+            throw NSError(domain: "AppModelTests", code: 3,
+                          userInfo: [NSLocalizedDescriptionKey: "could not prepare exception insert"])
+        }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        if let actualMaker {
+            sqlite3_bind_text(stmt, 1, actualMaker, -1, transient)
+        } else {
+            sqlite3_bind_null(stmt, 1)
+        }
+        sqlite3_bind_text(stmt, 2, exceptionAction, -1, transient)
+        sqlite3_bind_text(stmt, 3, note, -1, transient)
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            throw NSError(domain: "AppModelTests", code: 4,
+                          userInfo: [NSLocalizedDescriptionKey: "could not insert exception"])
+        }
+
+        return try XCTUnwrap(BarcodeDatabase(url: url), "fixture database should load")
+    }
+
+    private func tempDirectory() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("isnestle-appmodel-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.removeItem(at: url)
+        }
+        return url
     }
 }
 

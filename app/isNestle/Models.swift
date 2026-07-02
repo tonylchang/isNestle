@@ -20,6 +20,13 @@ enum Verdict: Equatable {
     case unknown     // barcode / brand not in the dataset
 }
 
+/// How a verdict was produced. Exact rows are strongest; prefix inference is a
+/// conservative offline hedge from the optional prefixes table.
+enum MatchBasis: Equatable {
+    case exact
+    case inferredFromPrefix
+}
+
 /// Result of resolving a barcode (or brand) to an owning company.
 struct OwnershipResult: Identifiable, Equatable {
     let query: String          // the barcode or brand that was looked up
@@ -28,6 +35,9 @@ struct OwnershipResult: Identifiable, Equatable {
     let verdict: Verdict
     var productName: String? = nil   // from the online fallback (OFF); local has none
     var manufacturer: String? = nil  // brand owner / maker (esp. for non-target products)
+    var matchBasis: MatchBasis = .exact
+    var note: String? = nil
+    var evidenceCount: Int? = nil
     var fromOnline: Bool = false     // resolved via the opt-in online lookup
 
     var id: String { query }
@@ -42,6 +52,12 @@ struct OwnershipResult: Identifiable, Equatable {
         [brandName, parent ?? manufacturer].compactMap { $0 }
     }
 
+    var openFoodFactsContributionURL: URL? {
+        guard verdict == .unknown,
+              OpenFoodFactsContribution.looksLikeBarcode(query) else { return nil }
+        return OpenFoodFactsContribution.addProductURL(barcode: query)
+    }
+
     /// Labeled fields for detailed themes (skips empties and obvious duplicates).
     var fields: [(label: String, value: String)] {
         var out: [(String, String)] = []
@@ -53,6 +69,14 @@ struct OwnershipResult: Identifiable, Equatable {
         else if let manufacturer, manufacturer.caseInsensitiveCompare(brandName ?? "") != .orderedSame {
             out.append(("Maker", manufacturer))
         }
+        if matchBasis == .inferredFromPrefix {
+            out.append(("Basis", "Manufacturer prefix"))
+        }
+        if let evidenceCount, evidenceCount > 0 {
+            let noun = evidenceCount == 1 ? "product" : "products"
+            out.append(("Evidence", "\(evidenceCount) known \(noun)"))
+        }
+        if let note, !note.isEmpty { out.append(("Note", note)) }
         return out
     }
 }

@@ -19,6 +19,19 @@ Must-have for the first usable release:
   Offline, a non-match is shown as "No Nestlé match" with an honest hedge because
   coverage isn't exhaustive. Online lookup can add product/brand context and catch
   target products missing from the bundle, but a no-match result remains hedged.
+
+  Two evidence-backed refinements to these semantics:
+  - **Licensed/regional reattribution** — when a cited exception rule shows the
+    physical product is made by someone else (e.g. US KitKat → Hershey under
+    license; US Crunch → Ferrara), the verdict is **Not Nestlé** with the actual
+    maker and note shown, instead of a false "avoid."
+  - **Hedged prefix matches** — a barcode not in the dataset can match a
+    conservatively inferred GS1 manufacturer prefix; the verdict is a match but
+    is explicitly labeled as inferred ("manufacturer prefix" basis + evidence
+    count), never presented as an exact hit.
+- **Contribute coverage misses** — an unknown result offers an explicit-tap
+  "add it to Open Food Facts" link, so misses improve the shared dataset (and
+  the next daily build) without the app running any server.
 - **Explain the verdict** — show the ownership chain that produced the answer
   (product → brand → subsidiary → parent), so the result is transparent and
   trustworthy.

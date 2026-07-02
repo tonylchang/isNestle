@@ -32,6 +32,9 @@ scan barcode ─► bundled SQLite ─► brand ─► parent ─► verdict
   the bundle is sent to the free Open Food Facts API to identify the product and
   check its brand tags against the target list. Only then does a barcode leave
   the device.
+- **Contribute misses by explicit tap.** Unknown barcode results can open Open
+  Food Facts' add-product page for that barcode. This never happens
+  automatically.
 - **Four themes.** *Minimal*, *Record*, *Receipt*, and *Tag* are switchable in
   Settings.
 
@@ -85,6 +88,8 @@ python3 scripts/verify_release_assets.py
 
 isNestle collects nothing. No account, no analytics, no tracking, no server of
 ours. With online lookup off (default), nothing about a scan leaves the device.
+Unknown-product contribution links send a barcode to Open Food Facts only when
+you explicitly tap them.
 Full policy: https://tonylchang.github.io/isNestle/privacy.html
 
 ## Spec-driven development

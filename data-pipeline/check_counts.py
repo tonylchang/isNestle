@@ -24,7 +24,7 @@ import common
 # Day-to-day wobble is normal (sources fluctuate a little); a drop beyond this
 # fraction in either table means a source silently degraded.
 MAX_SHRINK = 0.10
-COUNT_KEYS = ("brands", "barcodes")
+COUNT_KEYS = ("brands", "barcodes", "exceptions", "prefixes")
 
 
 def main(argv: list[str] | None = None) -> int:

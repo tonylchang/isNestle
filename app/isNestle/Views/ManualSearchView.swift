@@ -15,8 +15,18 @@ struct ManualSearchView: View {
                 Text("Type a brand name to check whether it’s owned by \(target.name).")
                     .foregroundStyle(.secondary)
             } else if hits.isEmpty {
-                Text("No matching brand in the database. That doesn’t prove it isn’t \(target.name) — only that it isn’t catalogued here.")
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("No matching brand in the database. That doesn’t prove it isn’t \(target.name) — only that it isn’t catalogued here.")
+                        .foregroundStyle(.secondary)
+                    if let url = contributionURL {
+                        Link(destination: url) {
+                            Label("Not found? Add it to Open Food Facts", systemImage: "square.and.pencil")
+                        }
+                        .font(.subheadline.weight(.medium))
+                        Text("This opens Open Food Facts. The barcode is sent only after you tap.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             } else {
                 ForEach(hits) { hit in
                     HStack(spacing: 12) {
@@ -47,5 +57,10 @@ struct ManualSearchView: View {
                 hits = db?.searchBrands(query: newQuery) ?? []
             }
         )
+    }
+
+    private var contributionURL: URL? {
+        guard OpenFoodFactsContribution.looksLikeBarcode(query) else { return nil }
+        return OpenFoodFactsContribution.addProductURL(barcode: query)
     }
 }

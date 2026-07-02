@@ -2,7 +2,8 @@
 
 An offline-first iPhone app: scan a product barcode and see whether it's made by
 Nestlé. By default nothing you scan or search leaves the device; optional online
-lookup can identify unknown products via Open Food Facts.
+lookup can identify unknown products via Open Food Facts. Unknown results can
+also link to Open Food Facts' add-product page, but only after an explicit tap.
 
 ## Status
 
@@ -31,6 +32,8 @@ iPhone; the Simulator has no camera and falls back to manual barcode entry.
   install of newer datasets.
 - `ManualSearchView` — local brand-name search. `SettingsView` — theme,
   online-lookup opt-in, dataset status, attribution, and disclaimer.
+- Unknown barcode results expose a low-key Open Food Facts contribution link;
+  the barcode leaves the device only when that link is tapped.
 
 The bundled `isNestle/Resources/isnestle.sqlite` is produced by the
 [data-pipeline](../data-pipeline): 601 brands, 33,424 barcodes.

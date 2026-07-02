@@ -37,7 +37,7 @@ struct ReceiptPanel: View {
                 Image(systemName: style.symbol).font(.caption)
                 Text("VERDICT").font(.system(.caption, design: .monospaced))
                 Spacer()
-                Text(style.shortWord.uppercased())
+                Text(style.shortWord(result).uppercased())
                     .font(.system(.subheadline, design: .monospaced)).fontWeight(.heavy)
             }
             .foregroundStyle(.white)
@@ -48,6 +48,7 @@ struct ReceiptPanel: View {
                 .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center).lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
+            OpenFoodFactsContributionLink(result: result, foreground: inkColor.opacity(0.65))
 
             Spacer(minLength: 4)
             fakeBarcode()

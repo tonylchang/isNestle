@@ -29,6 +29,14 @@ def _count(con: sqlite3.Connection, table: str) -> int:
     return int(con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
 
 
+def _optional_count(con: sqlite3.Connection, table: str) -> int:
+    exists = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?",
+        (table,),
+    ).fetchone()
+    return _count(con, table) if exists else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build the dataset manifest.")
     default_version = _dt.datetime.now(_dt.timezone.utc).strftime("%Y.%m.%d.%H%M")
@@ -44,14 +52,29 @@ def main(argv: list[str] | None = None) -> int:
     data = db.read_bytes()
     with sqlite3.connect(db) as con:
         brands, barcodes = _count(con, "brands"), _count(con, "barcodes")
+        exceptions = _optional_count(con, "exceptions")
+        prefixes = _optional_count(con, "prefixes")
+        matched_brand_slugs = int(con.execute(
+            "SELECT COUNT(*) FROM brands b "
+            "WHERE EXISTS (SELECT 1 FROM barcodes bc WHERE bc.brand_slug = b.brand_slug)"
+        ).fetchone()[0])
+        prefix_evidence_count = int(con.execute(
+            "SELECT COALESCE(SUM(evidence_count), 0) FROM prefixes"
+        ).fetchone()[0]) if prefixes else 0
 
     manifest = {
+        "schema_version": 2,
         "version": args.version,
         "sqlite_url": f"{RELEASE_BASE}/isnestle.sqlite",
         "sqlite_sha256": hashlib.sha256(data).hexdigest(),
         "sqlite_bytes": len(data),
         "brands": brands,
         "barcodes": barcodes,
+        "matched_brand_slugs": matched_brand_slugs,
+        "brand_match_rate": round((matched_brand_slugs / brands), 4) if brands else 0.0,
+        "exceptions": exceptions,
+        "prefixes": prefixes,
+        "prefix_evidence_count": prefix_evidence_count,
     }
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {MANIFEST_PATH}")

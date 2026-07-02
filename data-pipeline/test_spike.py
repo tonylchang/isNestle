@@ -39,6 +39,15 @@ MIN_BARCODES = 10000
 # Real NON-Nestlé barcode CONFIRMED via Search-a-licious: brands_tags == ['coca-cola'].
 NON_NESTLE = ("7702535016688", "Coca-Cola Fuze Tea (coca-cola)")
 
+# Offline W3 anchors: the curated false-positive rules must be shipped in SQLite.
+EXPECTED_EXCEPTIONS = [
+    ("kitkat", "co_brand", "hershey-s", "reattribute"),
+    ("kit-kat", "co_brand", "hershey-s", "reattribute"),
+    ("crunch", "country", "en:united-states", "reattribute"),
+    ("nestle-crunch", "country", "en:united-states", "reattribute"),
+    ("smarties", "country", "en:united-states", "exclude"),
+]
+
 
 def lookup(conn: sqlite3.Connection, barcode: str):
     """Scan-time lookup: barcode -> (brand_name, parent, is_target) or None."""
@@ -73,6 +82,34 @@ def main() -> int:
         print(f"  FAIL  PRAGMA foreign_key_check -> {len(fk_errors)} violation(s)")
         failures.append(f"sqlite foreign_key_check found {len(fk_errors)} violation(s)")
 
+    print("\n== Additive schema compatibility ==")
+    tables = {
+        row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )
+    }
+    for table in ("brands", "barcodes", "exceptions", "prefixes"):
+        if table in tables:
+            print(f"  PASS  table exists: {table}")
+        else:
+            print(f"  FAIL  missing table: {table}")
+            failures.append(f"missing table {table}")
+    barcode_columns = {row[1] for row in conn.execute("PRAGMA table_info(barcodes)")}
+    for column in ("barcode", "brand_slug", "source", "maker_override", "override_note", "match_basis", "evidence_count"):
+        if column not in barcode_columns:
+            failures.append(f"barcodes missing column {column}")
+    try:
+        conn.execute(
+            "SELECT b.brand_name, b.parent, b.is_target "
+            "FROM barcodes bc JOIN brands b ON bc.brand_slug = b.brand_slug "
+            "WHERE bc.barcode = ?",
+            ("0000000000000",),
+        ).fetchone()
+        print("  PASS  old app lookup SELECT still prepares")
+    except sqlite3.Error as exc:
+        print(f"  FAIL  old app lookup SELECT failed: {exc}")
+        failures.append(f"old app lookup SELECT failed: {exc}")
+
     # --- Positive: known Nestlé barcodes resolve to Nestlé -------------------
     print("\n== Known Nestlé barcodes (expect parent='Nestlé', is_target=1) ==")
     nestle_pass = 0
@@ -101,6 +138,21 @@ def main() -> int:
         print(f"  FAIL  {barcode}  -> {row[0]} / {row[1]}   [{desc}] (should be Unknown)")
         failures.append(f"non-Nestlé barcode {barcode} unexpectedly matched {row[1]}")
 
+    # --- W3 false-positive curation rules are present in the shipped DB ------
+    print("\n== False-positive curation rules (expect cited seed rules) ==")
+    for brand_slug, scope_type, scope_value, action in EXPECTED_EXCEPTIONS:
+        row = conn.execute(
+            "SELECT actual_maker, note, source_url FROM exceptions "
+            "WHERE brand_slug = ? AND scope_type = ? AND scope_value = ? AND action = ?",
+            (brand_slug, scope_type, scope_value, action),
+        ).fetchone()
+        label = f"{brand_slug}/{scope_type}:{scope_value}/{action}"
+        if row and row[1] and str(row[2]).startswith("https://"):
+            print(f"  PASS  {label}  -> source={row[2]}")
+        else:
+            print(f"  FAIL  missing or uncited exception rule: {label}")
+            failures.append(f"missing or uncited exception rule: {label}")
+
     # --- KEY SPIKE FINDING: normalization match-rate report ------------------
     print("\n== Normalization match-rate report ==")
     total_slugs = conn.execute("SELECT COUNT(*) FROM brands").fetchone()[0]
@@ -116,9 +168,13 @@ def main() -> int:
         )
     ]
     n_barcodes = conn.execute("SELECT COUNT(*) FROM barcodes").fetchone()[0]
+    n_exceptions = conn.execute("SELECT COUNT(*) FROM exceptions").fetchone()[0]
+    n_prefixes = conn.execute("SELECT COUNT(*) FROM prefixes").fetchone()[0]
     rate = (matched / total_slugs * 100.0) if total_slugs else 0.0
     print(f"  brand_slugs with >=1 OFF barcode: {matched}/{total_slugs} ({rate:.0f}%)")
     print(f"  total barcodes in dataset:        {n_barcodes}")
+    print(f"  exception rules in dataset:       {n_exceptions}")
+    print(f"  accepted prefixes in dataset:     {n_prefixes}")
     if total_slugs < MIN_BRANDS:
         failures.append(f"brand count is {total_slugs}, expected at least {MIN_BRANDS}")
     if matched < MIN_MATCHED_BRAND_SLUGS:

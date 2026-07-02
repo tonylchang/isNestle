@@ -36,7 +36,7 @@ struct TagPanel: View {
                     Image(systemName: style.symbol)
                         .font(.system(size: 30, weight: .bold)).foregroundStyle(style.color)
                         .accessibilityHidden(true)
-                    Text(style.shortWord)
+                    Text(style.shortWord(result))
                         .font(.system(size: 40, weight: .heavy, design: .rounded))
                         .foregroundStyle(style.color)
                         .lineLimit(1).minimumScaleFactor(0.5)
@@ -50,6 +50,15 @@ struct TagPanel: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .lineLimit(1).minimumScaleFactor(0.7).padding(.top, 2)
                 }
+                if let support = supportLine {
+                    Text(support).font(.system(.caption, design: .rounded))
+                        .foregroundStyle(ink.opacity(0.56))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(2).minimumScaleFactor(0.75).padding(.top, 4)
+                }
+                OpenFoodFactsContributionLink(result: result, foreground: ink.opacity(0.68))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, result.openFoodFactsContributionURL == nil ? 0 : 6)
 
                 Spacer(minLength: 6)
 
@@ -76,10 +85,20 @@ struct TagPanel: View {
 
     private var makerLine: String? {
         switch result.verdict {
-        case .match: return "Owned by \(target.name)"
+        case .match:
+            return result.matchBasis == .inferredFromPrefix
+                ? "Manufacturer code: \(target.name)"
+                : "Owned by \(target.name)"
         case .notTarget: return result.manufacturer.map { "Made by \($0)" }
         case .unknown: return nil
         }
+    }
+    private var supportLine: String? {
+        if result.verdict == .match, result.matchBasis == .inferredFromPrefix,
+           let evidence = result.evidenceCount, evidence > 0 {
+            return "\(evidence) known \(evidence == 1 ? "product" : "products") under this prefix"
+        }
+        return result.note
     }
     private var holePunch: some View {
         Circle().fill(kraft).frame(width: 22, height: 22)

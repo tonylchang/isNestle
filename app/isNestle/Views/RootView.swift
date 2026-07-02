@@ -15,7 +15,7 @@ struct RootView: View {
             .navigationTitle("isNestle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     NavigationLink {
                         SettingsView(model: model)
                     } label: {
@@ -23,7 +23,7 @@ struct RootView: View {
                     }
                     .accessibilityLabel("Settings")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink {
                         ManualSearchView(db: model.db, target: model.target)
                     } label: {
@@ -103,7 +103,7 @@ struct OnlineLookupBar: View {
         .alert("Online lookup", isPresented: $showInfo) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify the product and check its brand against the target list. Only the barcode (and your IP) is sent; nothing is stored.")
+            Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify the product and check its brand against the target list. Unknown results may also show an add-product link; that opens Open Food Facts only when you tap it. Only the barcode (and your IP) is sent; nothing is stored.")
         }
     }
 }

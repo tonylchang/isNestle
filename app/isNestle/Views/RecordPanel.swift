@@ -9,7 +9,8 @@ struct RecordPanel: View {
     private var style: VerdictStyle { VerdictStyle(result.verdict, target: target) }
     private var determination: String {
         switch result.verdict {
-        case .match: return target.name
+        case .match:
+            return result.matchBasis == .inferredFromPrefix ? "Likely \(target.name)" : target.name
         case .notTarget: return "Not \(target.name)"
         case .unknown: return "No \(target.name) record"
         }
@@ -52,6 +53,8 @@ struct RecordPanel: View {
             Text(style.detail(result))
                 .font(.system(.footnote, design: .serif)).padding(.top, 4)
                 .fixedSize(horizontal: false, vertical: true)
+            OpenFoodFactsContributionLink(result: result)
+                .padding(.top, 8)
 
             Spacer(minLength: 8)
             HStack {

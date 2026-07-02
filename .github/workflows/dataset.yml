@@ -38,7 +38,9 @@ jobs:
         working-directory: data-pipeline
         run: |
           python3 build_brands.py
+          python3 reconcile_brands.py --refresh-facets
           python3 build_barcodes.py
+          python3 build_prefixes.py
           python3 build_db.py
 
       - name: Validate dataset
@@ -48,6 +50,10 @@ jobs:
       - name: Build manifest
         working-directory: data-pipeline
         run: python3 build_manifest.py --version "$(date -u +%Y.%m.%d.%H%M)"
+
+      - name: Verify release assets
+        working-directory: data-pipeline
+        run: python3 ../scripts/verify_release_assets.py --db out/isnestle.sqlite --manifest out/manifest.json
 
       - name: Guard against dataset shrink
         working-directory: data-pipeline
@@ -93,6 +99,11 @@ jobs:
           echo "### Dataset built" >> "$GITHUB_STEP_SUMMARY"
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
           cat out/manifest.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Alias review" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,80p' out/alias_review.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish to rolling release

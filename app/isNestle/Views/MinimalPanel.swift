@@ -14,7 +14,7 @@ struct MinimalPanel: View {
             Image(systemName: style.symbol)
                 .font(.system(size: 50, weight: .bold)).foregroundStyle(.white)
                 .accessibilityHidden(true)
-            Text(style.headline)
+            Text(style.headline(result))
                 .font(.system(size: 32, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white).multilineTextAlignment(.center)
             if let name = result.productName {
@@ -33,6 +33,7 @@ struct MinimalPanel: View {
                 Label("via online lookup", systemImage: "wifi")
                     .font(.caption2).foregroundStyle(.white.opacity(0.85))
             }
+            OpenFoodFactsContributionLink(result: result, foreground: .white.opacity(0.9))
             Spacer(minLength: 8)
             footnote(isLookingUp: isLookingUp, color: .white.opacity(0.85))
         }

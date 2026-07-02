@@ -35,6 +35,12 @@ struct VerdictStyle {
         case .unknown:   return "NO \(target.name.uppercased()) MATCH"
         }
     }
+    func headline(_ r: OwnershipResult) -> String {
+        if r.verdict == .match, r.matchBasis == .inferredFromPrefix {
+            return "LIKELY \(target.name.uppercased())"
+        }
+        return headline
+    }
     /// Short word(s) for tight spots (receipt/tag).
     var shortWord: String {
         switch verdict {
@@ -43,15 +49,29 @@ struct VerdictStyle {
         case .unknown:   return "No match"
         }
     }
+    func shortWord(_ r: OwnershipResult) -> String {
+        if r.verdict == .match, r.matchBasis == .inferredFromPrefix {
+            return "Likely \(target.name)"
+        }
+        return shortWord
+    }
     func detail(_ r: OwnershipResult) -> String {
         switch r.verdict {
         case .match:
+            if r.matchBasis == .inferredFromPrefix {
+                let evidence = r.evidenceCount.map { "; \($0) known \($0 == 1 ? "product" : "products")" } ?? ""
+                return "Likely \(target.name) - this barcode's manufacturer code belongs to \(target.name)\(evidence)."
+            }
             let brand = r.brandName.map { " (brand: \($0))" } ?? ""
             return "This product is made by \(target.name)\(brand)."
         case .notTarget:
             let maker = r.manufacturer.map { " Made by \($0)." } ?? ""
-            return "Not made by \(target.name).\(maker)"
+            let note = r.note.map { " \($0)" } ?? ""
+            return "Not made by \(target.name).\(maker)\(note)"
         case .unknown:
+            if let note = r.note {
+                return "\(note) Coverage isn’t exhaustive, so this isn’t proof either way."
+            }
             if r.fromOnline, r.displayName != nil {
                 return "Product identified online, but no \(target.name) ownership match was found in the current database. Coverage isn’t exhaustive."
             }
@@ -59,7 +79,7 @@ struct VerdictStyle {
         }
     }
     func accessibilityLabel(_ r: OwnershipResult) -> String {
-        var parts = [headline + "."]
+        var parts = [headline(r) + "."]
         for f in r.fields { parts.append("\(f.label): \(f.value).") }
         parts.append(detail(r))
         return parts.joined(separator: " ")
@@ -90,6 +110,22 @@ struct ResultPanel: View {
             }
         } else {
             IdlePanel(target: target)
+        }
+    }
+}
+
+struct OpenFoodFactsContributionLink: View {
+    let result: OwnershipResult
+    var foreground: Color = .accentColor
+
+    var body: some View {
+        if let url = result.openFoodFactsContributionURL {
+            Link(destination: url) {
+                Label("Not found? Add it to Open Food Facts", systemImage: "square.and.pencil")
+                    .font(.caption.weight(.medium))
+            }
+            .foregroundStyle(foreground)
+            .accessibilityHint("Opens Open Food Facts. The barcode is sent only after you tap.")
         }
     }
 }

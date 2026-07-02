@@ -274,31 +274,32 @@ def fetch_wikipedia() -> tuple[list[str], list[str]]:
     return names, notes
 
 
-# --- Curated aliases ----------------------------------------------------------
-# (canonical display name, [name/slug variants]).  OFF's tagger is inconsistent
-# (e.g. emits both 'kitkat' and 'kit-kat'), so we seed both spellings.
+# --- Curated seed brands ------------------------------------------------------
+# Canonical display names that should be present even if Wikidata/Wikipedia are
+# unavailable or temporarily thin. Slug variants live in aliases.csv and are
+# merged by reconcile_brands.py so curation is data-driven.
 CURATED: list[tuple[str, list[str]]] = [
-    ("Nestlé", ["Nestlé", "Nestle"]),
-    ("KitKat", ["KitKat", "Kit Kat", "Kit-Kat"]),
-    ("Nescafé", ["Nescafé", "Nescafe"]),
-    ("Coffee-Mate", ["Coffee-Mate", "Coffee Mate", "Coffeemate"]),
-    ("San Pellegrino", ["San Pellegrino", "S.Pellegrino", "S. Pellegrino", "Sanpellegrino"]),
+    ("Nestlé", ["Nestlé"]),
+    ("KitKat", ["KitKat"]),
+    ("Nescafé", ["Nescafé"]),
+    ("Coffee-Mate", ["Coffee-Mate"]),
+    ("San Pellegrino", ["San Pellegrino"]),
     ("Perrier", ["Perrier"]),
     ("Vittel", ["Vittel"]),
     ("Acqua Panna", ["Acqua Panna"]),
-    ("Purina", ["Purina", "Purina ONE", "Purina Pro Plan"]),
-    ("Häagen-Dazs", ["Häagen-Dazs", "Haagen-Dazs", "Haagen Dazs"]),
+    ("Purina", ["Purina"]),
+    ("Häagen-Dazs", ["Häagen-Dazs"]),
     ("Smarties", ["Smarties"]),
     ("Aero", ["Aero"]),
-    ("Milkybar", ["Milkybar", "Milky Bar"]),
-    ("Crunch", ["Crunch", "Nestlé Crunch"]),
-    ("Toll House", ["Toll House", "Nestlé Toll House"]),
-    ("Stouffer's", ["Stouffer's", "Stouffers"]),
+    ("Milkybar", ["Milkybar"]),
+    ("Crunch", ["Crunch"]),
+    ("Toll House", ["Toll House"]),
+    ("Stouffer's", ["Stouffer's"]),
     ("Lean Cuisine", ["Lean Cuisine"]),
     ("Gerber", ["Gerber"]),
     ("Garden Gourmet", ["Garden Gourmet"]),
     ("Sweet Earth", ["Sweet Earth"]),
-    ("Blue Bottle", ["Blue Bottle", "Blue Bottle Coffee"]),
+    ("Blue Bottle", ["Blue Bottle"]),
     ("Nespresso", ["Nespresso"]),
     ("Cheerios", ["Cheerios"]),          # via Cereal Partners Worldwide (Nestlé/GM JV)
     ("Shredded Wheat", ["Shredded Wheat"]),

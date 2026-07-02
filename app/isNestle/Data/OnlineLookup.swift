@@ -13,7 +13,8 @@ enum OnlineLookup {
     }
 
     static func resolve(barcode: String) async -> Hit? {
-        guard let encoded = barcode.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+        guard let code = BarcodeInput.networkBarcode(barcode),
+              let encoded = code.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
               let url = URL(string:
                 "https://world.openfoodfacts.org/api/v2/product/\(encoded).json?fields=product_name,brands,brands_tags,brand_owner")
         else { return nil }

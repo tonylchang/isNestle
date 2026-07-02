@@ -49,7 +49,13 @@ final class AppModel: ObservableObject {
     var datasetVersion: String { DatasetStore.activeManifest?.version ?? "unknown" }
     /// Opt-in online fallback; persisted, off by default.
     @Published var onlineEnabled: Bool {
-        didSet { configuration.defaults.set(onlineEnabled, forKey: Self.onlineKey) }
+        didSet {
+            configuration.defaults.set(onlineEnabled, forKey: Self.onlineKey)
+            if !onlineEnabled {
+                lookupTask?.cancel()
+                isLookingUp = false
+            }
+        }
     }
     /// Active verdict theme; persisted, defaults to Minimal.
     @Published var theme: AppTheme {
@@ -112,17 +118,22 @@ final class AppModel: ObservableObject {
 
     func handleScanned(_ barcode: String) {
         guard let db else { return }
+        let barcode = BarcodeInput.trimmed(barcode)
+        guard !barcode.isEmpty else { return }
         lookupTask?.cancel()
         let local = db.lookup(barcode: barcode)
         result = local
         isLookingUp = false
 
         // Only reach out when the bundle has no answer AND the user opted in.
-        guard local.verdict == .unknown, onlineEnabled else { return }
+        guard local.verdict == .unknown,
+              onlineEnabled,
+              BarcodeInput.networkBarcode(barcode) != nil else { return }
         isLookingUp = true
         lookupTask = Task { [weak self] in
             guard let resolve = self?.configuration.resolveOnline else { return }
             let hit = await resolve(barcode)
+            guard !Task.isCancelled else { return }
             self?.applyOnline(hit, for: barcode)
         }
     }
@@ -131,21 +142,41 @@ final class AppModel: ObservableObject {
         guard result?.query == barcode else { return }   // user moved on; a stale
         // completion must not touch state (incl. a newer lookup's spinner)
         isLookingUp = false
+        guard onlineEnabled else { return }               // user opted out while the request was in flight
         guard let hit else { return }                     // network/parse failed; keep local result
         if let match = db?.matchTargetBrand(slugs: hit.brandSlugs) {
+            if let exception = db?.coBrandException(for: match.brandSlug, brandSlugs: hit.brandSlugs) {
+                switch exception.action {
+                case .reattribute:
+                    result = OwnershipResult(query: barcode, brandName: match.brandName, parent: nil,
+                                             verdict: .notTarget, productName: hit.productName,
+                                             manufacturer: exception.actualMaker ?? hit.owner,
+                                             note: exception.note, fromOnline: true)
+                case .exclude:
+                    result = identifiedUnknown(hit, for: barcode, fallbackBrand: hit.brandsDisplay ?? match.brandName,
+                                               note: exception.note)
+                }
+                return
+            }
             result = OwnershipResult(query: barcode, brandName: match.brandName, parent: match.parent,
                                      verdict: .match, productName: hit.productName, fromOnline: true)
         } else if hit.brandsDisplay != nil || !hit.brandSlugs.isEmpty {
             // OFF can identify the product, but our target-owned brand list did
             // not match. Keep this as "unknown/no match" rather than asserting
             // the product is definitely not target-owned.
-            let brand = hit.brandsDisplay
-                ?? hit.brandSlugs.first.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
-            result = OwnershipResult(query: barcode, brandName: brand, parent: nil,
-                                     verdict: .unknown, productName: hit.productName,
-                                     manufacturer: hit.owner, fromOnline: true)
+            result = identifiedUnknown(hit, for: barcode)
         }
         // else: OFF doesn't have it either → leave the local "no match" result as-is.
+    }
+
+    private func identifiedUnknown(_ hit: OnlineLookup.Hit, for barcode: String,
+                                   fallbackBrand: String? = nil, note: String? = nil) -> OwnershipResult {
+        let brand = hit.brandsDisplay
+            ?? fallbackBrand
+            ?? hit.brandSlugs.first.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
+        return OwnershipResult(query: barcode, brandName: brand, parent: nil,
+                               verdict: .unknown, productName: hit.productName,
+                               manufacturer: hit.owner, note: note, fromOnline: true)
     }
 
     func clear() {

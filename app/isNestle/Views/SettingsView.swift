@@ -23,7 +23,7 @@ struct SettingsView: View {
 
             Section("Online lookup") {
                 Toggle("Check unknown barcodes online", isOn: $model.onlineEnabled)
-                Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify the product and check its brand against the target list. Only the barcode (and your IP) is sent; nothing is stored.")
+                Text("Off by default. When on, a barcode that isn’t in the offline database is sent to Open Food Facts to identify the product and check its brand against the target list. Unknown results may show an add-product link; that sends the barcode to Open Food Facts only after you tap it. Only the barcode (and your IP) is sent; nothing is stored.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -42,7 +42,7 @@ struct SettingsView: View {
                 }
                 .disabled(model.updateState == .checking)
                 Link("Privacy policy", destination: Self.privacyURL)
-                Text("The dataset updates itself from a public file — nothing about your scans is sent. Product data: Open Food Facts (ODbL). Brand ownership: Wikidata (CC0), Wikipedia.")
+                Text("The dataset updates itself from a public file — nothing about your scans is sent. Product data: Open Food Facts (ODbL). You can add unknown products to Open Food Facts by explicit tap, helping future daily builds. Brand ownership: Wikidata (CC0), Wikipedia.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 

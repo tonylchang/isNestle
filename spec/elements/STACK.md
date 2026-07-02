@@ -49,8 +49,11 @@ The pipeline blends multiple sources, split by license.
   queries all three **alongside OFF** to close its non-food gaps. **Open Pet Food
   Facts** is the high-value one for Nestlé: it closes the **Purina / pet-care gap**
   that OFF covers poorly (`purina` → ~400 products there vs. a handful in OFF).
-  Unlike OFF, the siblings don't run Search-a-licious, so they're queried via the
-  classic Product Opener REST API (`/api/v2/search`).
+- **Production barcode source: the OFF-family bulk dumps** (streamed TSV, stdlib
+  only), which remove the search API's 10k result window and carry the co-brand /
+  country / owner evidence used by the licensing-exception rules. The search APIs
+  (Search-a-licious for OFF; classic `/api/v2/search` for the siblings) remain the
+  per-dataset fallback when a dump is unavailable.
 - **Wikidata** (brand → parent company; Nestlé = entity `Q160746`). License:
   **CC0** — no obligations.
 - **Wikipedia** "List of Nestlé brands" + nestle.com/brands — supplemental brand

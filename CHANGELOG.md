@@ -25,6 +25,21 @@ Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.jso
   `manifest.json` (Ed25519) and the app refuses to install a dataset whose
   manifest isn't signed by a trusted key baked into the binary (primary +
   offline standby for rotation). GitHub Actions are pinned by commit SHA.
+- Dataset input hardening (see `input_hardening.md`):
+  - Barcode collection now streams the OFF-family bulk dumps (search APIs kept
+    as a per-dataset fallback), capturing co-brand, country, and owner evidence.
+  - Brand slugs are reconciled against OFF's real brand-tag vocabulary via a
+    reviewed `aliases.csv`; fuzzy candidates go to a review report, never data.
+  - Cited licensing/regional exception rules (`exceptions.csv`) ship inside the
+    dataset: US KitKat and US Crunch are reattributed to their actual makers
+    (shown as "Not Nestlé" with an explanatory note) and the unrelated US
+    Smarties brand is excluded — in both the offline and online lookup paths.
+  - Conservative GS1 manufacturer-prefix inference extends offline coverage;
+    prefix hits are explicitly hedged in every theme (basis + evidence count).
+  - Unknown results offer an explicit-tap "add it to Open Food Facts" link so
+    coverage misses feed the next daily build (disclosed in the privacy policy).
+  - The manifest now reports `schema_version` and data-quality metrics (brand
+    match rate, exception and prefix counts), all guarded against regression.
 
 ### Fixed
 

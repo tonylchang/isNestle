@@ -1,0 +1,6 @@
+brand_slug,scope_type,scope_value,actual_maker,action,note,source_url
+kitkat,co_brand,hershey-s,The Hershey Company,reattribute,US Kit Kat is made under license by Hershey,https://en.wikipedia.org/wiki/Kit_Kats_in_the_United_States
+kit-kat,co_brand,hershey-s,The Hershey Company,reattribute,US Kit Kat is made under license by Hershey,https://en.wikipedia.org/wiki/Kit_Kats_in_the_United_States
+crunch,country,en:united-states,Ferrara Candy Company,reattribute,US Crunch is produced by Ferrara under Ferrero ownership,https://en.wikipedia.org/wiki/Crunch_(chocolate_bar)
+nestle-crunch,country,en:united-states,Ferrara Candy Company,reattribute,US Crunch is produced by Ferrara under Ferrero ownership,https://en.wikipedia.org/wiki/Crunch_(chocolate_bar)
+smarties,country,en:united-states,Smarties Candy Company,exclude,US Smarties wafer candy is made by Smarties Candy Company,https://www.smarties.com/our-story/

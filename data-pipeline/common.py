@@ -23,7 +23,13 @@ OUT = ROOT / "out"                              # generated artifacts (gitignore
 SCHEMA_SQL = ROOT / "schema.sql"
 BRANDS_CSV = OUT / "brands.csv"                  # produced by build_brands.py (Agent A)
 BARCODES_CSV = OUT / "barcodes.csv"             # produced by build_barcodes.py (Agent B)
+PREFIX_CORPUS_CSV = OUT / "prefix_corpus.csv"   # produced by dump-mode barcode collection
+PREFIXES_CSV = OUT / "prefixes.csv"             # produced by build_prefixes.py
 SQLITE_DB = OUT / "isnestle.sqlite"             # produced by build_db.py (Agent B)
+ALIASES_CSV = ROOT / "aliases.csv"              # reviewed brand-tag aliases
+EXCEPTIONS_CSV = ROOT / "exceptions.csv"        # reviewed false-positive rules
+ALIAS_REVIEW_TXT = OUT / "alias_review.txt"
+BRAND_FACET_CACHE = OUT / "brand_facets.json"
 
 # --- Constants ---------------------------------------------------------------
 PARENT_DEFAULT = "Nestlé"
@@ -36,6 +42,8 @@ OPFF_SEARCH_URL = "https://world.openpetfoodfacts.org/api/v2/search"   # pet car
 OBF_SEARCH_URL = "https://world.openbeautyfacts.org/api/v2/search"     # cosmetics
 OPF_SEARCH_URL = "https://world.openproductsfacts.org/api/v2/search"   # household / non-food
 USER_AGENT = "isNestle-data-spike/0.1 (https://github.com/tonylchang/isNestle; M0 data pipeline)"
+
+CSV_FIELD_SIZE_LIMIT = 1024 * 1024 * 128
 
 
 # --- Brand slug: THE integration contract ------------------------------------
@@ -58,6 +66,48 @@ def off_slug(name: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", s)
     s = re.sub(r"-+", "-", s).strip("-")
     return s
+
+
+def parse_tag_list(value) -> list[str]:
+    """Return normalized OFF-style tags from a CSV/API field.
+
+    OFF API responses expose tags as lists, while dumps expose comma-separated
+    strings. The dump values are already slug-like; ``off_slug`` keeps synthetic
+    unit tests and occasional plain-text values aligned with the rest of the
+    pipeline.
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        raw = value
+    else:
+        raw = str(value).split(",")
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        tag = str(item).strip().lower()
+        if not tag:
+            continue
+        # Preserve OFF language prefixes in country tags (e.g. en:united-states)
+        # but normalize ordinary brand tags.
+        if ":" in tag:
+            lang, value = tag.split(":", 1)
+            slug_value = off_slug(value)
+            slug = f"{lang}:{slug_value}" if re.fullmatch(r"[a-z]{2}", lang) and slug_value else ""
+        else:
+            slug = off_slug(tag)
+        if slug and slug not in seen:
+            seen.add(slug)
+            out.append(slug)
+    return out
+
+
+def normalize_gtin13(barcode: str) -> str | None:
+    """Normalize a UPC/EAN-ish barcode to GTIN-13, or return None if invalid."""
+    digits = re.sub(r"\D", "", barcode or "")
+    if not digits or len(digits) > 13:
+        return None
+    return digits.zfill(13)
 
 
 # --- Resilient HTTP (OFF/Wikidata are slow & occasionally flaky) -------------

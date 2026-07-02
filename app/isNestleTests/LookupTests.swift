@@ -50,6 +50,201 @@ final class LookupTests: XCTestCase {
                      "no target brand among these slugs")
     }
 
+    func testOldSchemaFixtureStillLooksUpExactRows() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('1111111111111', 'nestle', 'fixture');
+        """)
+
+        let exact = db.lookup(barcode: "1111111111111")
+        XCTAssertEqual(exact.verdict, .match)
+        XCTAssertEqual(exact.brandName, "Nestlé")
+        XCTAssertEqual(exact.matchBasis, .exact)
+
+        let missing = db.lookup(barcode: "0999999999999")
+        XCTAssertEqual(missing.verdict, .unknown)
+    }
+
+    func testExactLookupTriesUPCAAndEAN13Variants() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('0123456789012', 'nestle', 'fixture'),
+                                    ('888888888888', 'nestle', 'fixture');
+        """)
+
+        let padded = db.lookup(barcode: "123456789012")
+        XCTAssertEqual(padded.verdict, .match)
+        XCTAssertEqual(padded.query, "123456789012")
+
+        let depadded = db.lookup(barcode: "0888888888888")
+        XCTAssertEqual(depadded.verdict, .match)
+        XCTAssertEqual(depadded.query, "0888888888888")
+    }
+
+    func testOverrideRowReturnsNotTargetMakerAndNote() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT,
+                               maker_override TEXT, override_note TEXT, match_basis TEXT,
+                               evidence_count INTEGER);
+        INSERT INTO brands VALUES ('kitkat', 'KitKat', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('034000002004', 'kitkat', 'fixture', 'Hershey',
+                                    'Made under license by Hershey in the US.', 'exact', 2);
+        """)
+
+        let result = db.lookup(barcode: "034000002004")
+
+        XCTAssertEqual(result.verdict, .notTarget)
+        XCTAssertEqual(result.brandName, "KitKat")
+        XCTAssertNil(result.parent)
+        XCTAssertEqual(result.manufacturer, "Hershey")
+        XCTAssertEqual(result.note, "Made under license by Hershey in the US.")
+        XCTAssertEqual(result.evidenceCount, 2)
+        XCTAssertTrue(result.fields.contains { $0.label == "Note" && $0.value.contains("Hershey") })
+    }
+
+    func testCoBrandExceptionLookupReadsOptionalTable() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE exceptions (brand_slug TEXT, scope_type TEXT, scope_value TEXT,
+                                 actual_maker TEXT, action TEXT, note TEXT, source_url TEXT);
+        INSERT INTO brands VALUES ('kitkat', 'KitKat', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('1111111111111', 'kitkat', 'fixture');
+        INSERT INTO exceptions VALUES ('kitkat', 'co_brand', 'hershey-s', 'Hershey',
+                                       'reattribute', 'US KitKat is made by Hershey.', 'https://example.com');
+        """)
+
+        let exception = db.coBrandException(for: "kitkat", brandSlugs: ["kitkat", "hershey-s"])
+
+        XCTAssertEqual(exception?.action, .reattribute)
+        XCTAssertEqual(exception?.actualMaker, "Hershey")
+        XCTAssertEqual(exception?.note, "US KitKat is made by Hershey.")
+        XCTAssertNil(db.coBrandException(for: "kitkat", brandSlugs: ["kitkat"]))
+    }
+
+    func testPrefixLookupUsesLongestTargetPrefix() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE prefixes (prefix TEXT PRIMARY KEY, parent TEXT, is_target INTEGER,
+                               evidence_count INTEGER, source TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('9999999999999', 'nestle', 'fixture');
+        INSERT INTO prefixes VALUES ('012345', 'Nestlé', 1, 12, 'fixture'),
+                                    ('0123456', 'Nestlé', 1, 24, 'fixture');
+        """)
+
+        let result = db.lookup(barcode: "123456789012")
+
+        XCTAssertEqual(result.verdict, .match)
+        XCTAssertEqual(result.parent, "Nestlé")
+        XCTAssertEqual(result.matchBasis, .inferredFromPrefix)
+        XCTAssertEqual(result.evidenceCount, 24)
+        XCTAssertNil(result.brandName)
+    }
+
+    func testExactBarcodeMatchWinsOverPrefix() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE prefixes (prefix TEXT PRIMARY KEY, parent TEXT, is_target INTEGER,
+                               evidence_count INTEGER, source TEXT);
+        INSERT INTO brands VALUES ('cola', 'Cola', 'The Cola Company', 0),
+                                  ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('0123456789012', 'cola', 'fixture');
+        INSERT INTO prefixes VALUES ('012345', 'Nestlé', 1, 20, 'fixture');
+        """)
+
+        let result = db.lookup(barcode: "0123456789012")
+
+        XCTAssertEqual(result.verdict, .notTarget)
+        XCTAssertEqual(result.brandName, "Cola")
+        XCTAssertEqual(result.parent, "The Cola Company")
+        XCTAssertEqual(result.matchBasis, .exact)
+        XCTAssertNil(result.evidenceCount)
+    }
+
+    func testPrefixLookupSkipsHardExcludedRanges() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE prefixes (prefix TEXT PRIMARY KEY, parent TEXT, is_target INTEGER,
+                               evidence_count INTEGER, source TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('9999999999999', 'nestle', 'fixture');
+        INSERT INTO prefixes VALUES ('020000', 'Nestlé', 1, 12, 'fixture'),
+                                    ('978123', 'Nestlé', 1, 12, 'fixture');
+        """)
+
+        XCTAssertEqual(db.lookup(barcode: "200001234567").verdict, .unknown)
+        XCTAssertEqual(db.lookup(barcode: "9781234567897").verdict, .unknown)
+    }
+
+    func testPrefixExceptionSuppressesInferredMatch() throws {
+        let db = try makeDatabase(sql: """
+        CREATE TABLE brands (brand_slug TEXT PRIMARY KEY, brand_name TEXT NOT NULL,
+                             parent TEXT NOT NULL, is_target INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE barcodes (barcode TEXT PRIMARY KEY, brand_slug TEXT NOT NULL, source TEXT);
+        CREATE TABLE prefixes (prefix TEXT PRIMARY KEY, parent TEXT, is_target INTEGER,
+                               evidence_count INTEGER, source TEXT);
+        CREATE TABLE exceptions (brand_slug TEXT, scope_type TEXT, scope_value TEXT,
+                                 actual_maker TEXT, action TEXT, note TEXT, source_url TEXT);
+        INSERT INTO brands VALUES ('nestle', 'Nestlé', 'Nestlé', 1);
+        INSERT INTO barcodes VALUES ('9999999999999', 'nestle', 'fixture');
+        INSERT INTO prefixes VALUES ('003400', 'Nestlé', 1, 20, 'fixture');
+        INSERT INTO exceptions VALUES ('kitkat', 'prefix', '034000', 'Hershey',
+                                       'reattribute', 'Hershey prefix.', 'https://example.com');
+        """)
+
+        XCTAssertEqual(db.lookup(barcode: "034000002004").verdict, .unknown)
+    }
+
+    func testContributionURLAllowsOnlyBarcodeUnknowns() {
+        let url = OpenFoodFactsContribution.addProductURL(barcode: " 1234567890123 ")
+        XCTAssertEqual(url?.absoluteString,
+                       "https://world.openfoodfacts.org/cgi/product.pl?type=add&code=1234567890123")
+        XCTAssertNil(OpenFoodFactsContribution.addProductURL(barcode: "123 45&x=%"))
+        XCTAssertFalse(OpenFoodFactsContribution.looksLikeBarcode("1234567"))
+        XCTAssertFalse(OpenFoodFactsContribution.looksLikeBarcode("１２３４５６７８"))
+        XCTAssertTrue(OpenFoodFactsContribution.looksLikeBarcode("12345678"))
+
+        let unknown = OwnershipResult(query: "1234567890123", brandName: nil, parent: nil, verdict: .unknown)
+        XCTAssertEqual(unknown.openFoodFactsContributionURL?.absoluteString,
+                       "https://world.openfoodfacts.org/cgi/product.pl?type=add&code=1234567890123")
+
+        let nonBarcodeUnknown = OwnershipResult(query: "not-a-barcode", brandName: nil, parent: nil,
+                                                verdict: .unknown)
+        XCTAssertNil(nonBarcodeUnknown.openFoodFactsContributionURL)
+
+        let match = OwnershipResult(query: "1234567890123", brandName: "Nestlé", parent: "Nestlé",
+                                    verdict: .match)
+        XCTAssertNil(match.openFoodFactsContributionURL)
+    }
+
+    func testPrefixHedgeCopyIncludesLikelyAndEvidence() {
+        let result = OwnershipResult(query: "1234567890123", brandName: nil, parent: "Nestlé",
+                                     verdict: .match, matchBasis: .inferredFromPrefix,
+                                     evidenceCount: 10)
+        let style = VerdictStyle(.match, target: .defaultTarget)
+
+        XCTAssertEqual(style.headline(result), "LIKELY NESTLÉ")
+        XCTAssertEqual(style.shortWord(result), "Likely Nestlé")
+        XCTAssertTrue(style.detail(result).contains("10 known products"))
+        XCTAssertTrue(result.fields.contains { $0.label == "Basis" && $0.value == "Manufacturer prefix" })
+    }
+
     func testCountsAreHealthy() throws {
         let db = try makeDB()
         let c = db.counts()
@@ -441,6 +636,26 @@ final class LookupTests: XCTestCase {
         let dir = try tempDirectory()
         let url = dir.appendingPathComponent(UUID().uuidString)
         try data.write(to: url)
+        return url
+    }
+
+    private func makeDatabase(sql: String) throws -> BarcodeDatabase {
+        let url = try makeSQLiteDatabase(sql: sql)
+        return try XCTUnwrap(BarcodeDatabase(url: url), "fixture database should load")
+    }
+
+    private func makeSQLiteDatabase(sql: String) throws -> URL {
+        let url = try tempDirectory().appendingPathComponent("fixture.sqlite")
+        var db: OpaquePointer?
+        defer { sqlite3_close(db) }
+        guard sqlite3_open(url.path, &db) == SQLITE_OK else {
+            throw NSError(domain: "LookupTests", code: 3,
+                          userInfo: [NSLocalizedDescriptionKey: "could not create fixture db"])
+        }
+        guard sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK else {
+            throw NSError(domain: "LookupTests", code: 4,
+                          userInfo: [NSLocalizedDescriptionKey: "could not populate fixture db"])
+        }
         return url
     }
 
