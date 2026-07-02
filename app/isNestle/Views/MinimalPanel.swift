@@ -6,17 +6,20 @@ struct MinimalPanel: View {
     let result: OwnershipResult
     let isLookingUp: Bool
     let target: BoycottTarget
+    /// Scales with Dynamic Type (UI.md: no fixed-size critical text).
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 50
     private var style: VerdictStyle { VerdictStyle(result.verdict, target: target) }
 
     var body: some View {
         VStack(spacing: 10) {
             Spacer(minLength: 8)
             Image(systemName: style.symbol)
-                .font(.system(size: 50, weight: .bold)).foregroundStyle(.white)
+                .font(.system(size: iconSize, weight: .bold)).foregroundStyle(.white)
                 .accessibilityHidden(true)
             Text(style.headline(result))
-                .font(.system(size: 32, weight: .heavy, design: .rounded))
+                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                 .foregroundStyle(.white).multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
             if let name = result.productName {
                 Text(name).font(.title3.weight(.semibold)).foregroundStyle(.white)
                     .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.8)
@@ -40,8 +43,7 @@ struct MinimalPanel: View {
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(style.color)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(style.accessibilityLabel(result))
+        .verdictAccessibility(style: style, result: result)
     }
 
     private func footnote(isLookingUp: Bool, color: Color) -> some View {

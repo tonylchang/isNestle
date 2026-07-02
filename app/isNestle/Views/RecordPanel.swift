@@ -71,8 +71,7 @@ struct RecordPanel: View {
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(14)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(style.accessibilityLabel(result))
+        .verdictAccessibility(style: style, result: result)
     }
 
     private func eyebrow(_ t: String) -> some View {

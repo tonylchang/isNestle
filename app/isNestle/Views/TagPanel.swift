@@ -7,6 +7,9 @@ struct TagPanel: View {
     let isLookingUp: Bool
     let target: BoycottTarget
     private var style: VerdictStyle { VerdictStyle(result.verdict, target: target) }
+    /// Scale with Dynamic Type (UI.md: no fixed-size critical text).
+    @ScaledMetric(relativeTo: .largeTitle) private var priceSize: CGFloat = 40
+    @ScaledMetric(relativeTo: .largeTitle) private var priceIconSize: CGFloat = 30
     private let kraft = Color(red: 0.89, green: 0.85, blue: 0.76)
     private let card = Color(red: 0.99, green: 0.98, blue: 0.96)
     private let ink = Color(red: 0.18, green: 0.16, blue: 0.13)
@@ -34,10 +37,10 @@ struct TagPanel: View {
                 // The "price" = the verdict.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: style.symbol)
-                        .font(.system(size: 30, weight: .bold)).foregroundStyle(style.color)
+                        .font(.system(size: priceIconSize, weight: .bold)).foregroundStyle(style.color)
                         .accessibilityHidden(true)
                     Text(style.shortWord(result))
-                        .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .font(.system(size: priceSize, weight: .heavy, design: .rounded))
                         .foregroundStyle(style.color)
                         .lineLimit(1).minimumScaleFactor(0.5)
                     Spacer(minLength: 0)
@@ -52,7 +55,7 @@ struct TagPanel: View {
                 }
                 if let support = supportLine {
                     Text(support).font(.system(.caption, design: .rounded))
-                        .foregroundStyle(ink.opacity(0.56))
+                        .foregroundStyle(ink.opacity(0.66))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .lineLimit(2).minimumScaleFactor(0.75).padding(.top, 4)
                 }
@@ -64,7 +67,7 @@ struct TagPanel: View {
 
                 HStack {
                     Text("GTIN \(result.query)")
-                        .font(.system(.caption2, design: .rounded)).foregroundStyle(ink.opacity(0.5))
+                        .font(.system(.caption2, design: .rounded)).foregroundStyle(ink.opacity(0.62))
                     Spacer()
                     if isLookingUp {
                         ProgressView().controlSize(.mini)
@@ -79,8 +82,7 @@ struct TagPanel: View {
             .padding(.horizontal, 22).padding(.vertical, 16)
         }
         .environment(\.colorScheme, .light)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(style.accessibilityLabel(result))
+        .verdictAccessibility(style: style, result: result)
     }
 
     private var makerLine: String? {

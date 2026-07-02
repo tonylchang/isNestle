@@ -114,6 +114,33 @@ struct ResultPanel: View {
     }
 }
 
+extension View {
+    /// Shared verdict-panel accessibility: VoiceOver reads the whole panel as one
+    /// element (single swipe at the shelf), while the contribution link — visually
+    /// inside the panel but flattened away by `children: .ignore` — stays reachable
+    /// as a custom accessibility action.
+    func verdictAccessibility(style: VerdictStyle, result: OwnershipResult) -> some View {
+        modifier(VerdictAccessibilityModifier(style: style, result: result))
+    }
+}
+
+private struct VerdictAccessibilityModifier: ViewModifier {
+    let style: VerdictStyle
+    let result: OwnershipResult
+    @Environment(\.openURL) private var openURL
+
+    func body(content: Content) -> some View {
+        content
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(style.accessibilityLabel(result))
+            .accessibilityActions {
+                if let url = result.openFoodFactsContributionURL {
+                    Button("Add this product to Open Food Facts") { openURL(url) }
+                }
+            }
+    }
+}
+
 struct OpenFoodFactsContributionLink: View {
     let result: OwnershipResult
     var foreground: Color = .accentColor
@@ -132,12 +159,13 @@ struct OpenFoodFactsContributionLink: View {
 
 private struct IdlePanel: View {
     let target: BoycottTarget
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 44
 
     var body: some View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "viewfinder")
-                .font(.system(size: 44)).foregroundStyle(.secondary)
+                .font(.system(size: iconSize)).foregroundStyle(.secondary)
                 .accessibilityHidden(true)
             Text("Center a barcode in the frame").font(.headline)
             Text("You’ll see instantly whether it’s made by \(target.name).")

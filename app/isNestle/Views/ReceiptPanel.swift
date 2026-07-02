@@ -15,7 +15,7 @@ struct ReceiptPanel: View {
             Text("isNESTLE  MARKET")
                 .font(.system(.subheadline, design: .monospaced)).fontWeight(.bold)
             Text("CHECKOUT · OPEN FOOD FACTS")
-                .font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
+                .font(.system(.caption2, design: .monospaced)).foregroundStyle(.secondary)
             dashes()
 
             ForEach(result.fields, id: \.label) { f in
@@ -45,17 +45,17 @@ struct ReceiptPanel: View {
             .background(style.color)
 
             Text(style.detail(result))
-                .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
-                .multilineTextAlignment(.center).lineLimit(2)
+                .font(.system(.caption2, design: .monospaced)).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
-            OpenFoodFactsContributionLink(result: result, foreground: inkColor.opacity(0.65))
+            OpenFoodFactsContributionLink(result: result, foreground: inkColor.opacity(0.75))
 
             Spacer(minLength: 4)
             fakeBarcode()
             Text(result.query)
-                .font(.system(size: 11, design: .monospaced)).tracking(2)
+                .font(.system(.caption2, design: .monospaced)).tracking(2)
             Text(isLookingUp ? "CHECKING ONLINE…" : (result.fromOnline ? "VIA ONLINE LOOKUP · ODbL" : "ODbL · CC0"))
-                .font(.system(size: 9, design: .monospaced)).foregroundStyle(.tertiary)
+                .font(.system(.caption2, design: .monospaced)).foregroundStyle(.tertiary)
         }
         .foregroundStyle(inkColor)
         .padding(.horizontal, 22).padding(.top, 20).padding(.bottom, 26)
@@ -66,8 +66,7 @@ struct ReceiptPanel: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
         .environment(\.colorScheme, .light)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(style.accessibilityLabel(result))
+        .verdictAccessibility(style: style, result: result)
     }
 
     private func dashes() -> some View {
