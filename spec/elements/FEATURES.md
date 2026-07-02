@@ -54,6 +54,11 @@ Must-have for the first usable release:
 - **Data-driven target company** — the boycott target is defined by data, not
   hard-coded. v1 ships with Nestlé as the default/only exposed target, but the
   engine must support other parent companies by swapping/extending the dataset.
+- **System integration (App Intents)** — "Check Barcode" and "Check Brand"
+  App Intents exposed to Shortcuts, Spotlight, and Siri, so a verdict is
+  reachable without opening the app (e.g. from a Shortcut in a shopping flow).
+  Intent lookups are **offline-only** — they never use the online fallback, so
+  nothing leaves the device regardless of the in-app toggle.
 
 ## Planned Features
 

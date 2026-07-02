@@ -40,9 +40,18 @@ Dataset releases are versioned separately by UTC CalVer in `dataset_manifest.jso
     coverage misses feed the next daily build (disclosed in the privacy policy).
   - The manifest now reports `schema_version` and data-quality metrics (brand
     match rate, exception and prefix counts), all guarded against regression.
+- "Check Barcode" and "Check Brand" App Intents for Shortcuts, Spotlight, and
+  Siri — offline-only lookups that never use the online fallback.
 
 ### Fixed
 
+- VoiceOver can now reach the "Add it to Open Food Facts" link inside verdict
+  panels (exposed as a custom accessibility action on all four themes).
+- Verdict text now scales with Dynamic Type everywhere: fixed point sizes in
+  the Minimal headline, Tag "price", idle icon, and Receipt micro-type were
+  replaced with text-style-relative fonts and scaled metrics.
+- Raised contrast on low-opacity informative text in the Tag and Receipt
+  themes (GTIN, evidence, and contribution-link lines).
 - A stale online lookup completing after a newer scan no longer clears the
   newer lookup's "checking…" indicator.
 

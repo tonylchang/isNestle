@@ -41,6 +41,39 @@ final class LookupTests: XCTestCase {
         XCTAssertEqual(db.activeTarget().name, "Nestlé")
     }
 
+    func testIntentVerdictSummaries() throws {
+        let db = try makeDB()
+        let target = db.activeTarget()
+
+        let match = db.lookup(barcode: "3023290000953")   // Aero — known match
+        let matchSummary = IntentVerdict.summary(for: match, target: target)
+        XCTAssertTrue(matchSummary.contains(target.name))
+        XCTAssertTrue(matchSummary.contains("made by"), "match summary should explain the verdict")
+
+        let unknown = db.lookup(barcode: "7702535016688") // Coca-Cola — not in dataset
+        let unknownSummary = IntentVerdict.summary(for: unknown, target: target)
+        XCTAssertTrue(unknownSummary.contains("No match"))
+        XCTAssertTrue(unknownSummary.contains("isn’t proof"), "unknown summary must stay hedged")
+
+        let hit = try XCTUnwrap(db.searchBrands(query: "Nescafé", limit: 1).first)
+        XCTAssertEqual(IntentVerdict.summary(for: hit, query: "Nescafé", target: target),
+                       "\(hit.brandName) is made by \(hit.parent).")
+        XCTAssertTrue(IntentVerdict.summary(for: nil, query: "zzz", target: target)
+            .contains("No \(target.name) match"))
+    }
+
+    func testCheckIntentsPerformOffline() async throws {
+        // Smoke test: both intents resolve against the bundled dataset without
+        // touching the network (intents are offline-only by design).
+        let barcodeIntent = CheckBarcodeIntent()
+        barcodeIntent.barcode = "3023290000953"
+        _ = try await barcodeIntent.perform()
+
+        let brandIntent = CheckBrandIntent()
+        brandIntent.brand = "Nescafé"
+        _ = try await brandIntent.perform()
+    }
+
     func testMatchTargetBrandFromSlugs() throws {
         let db = try makeDB()
         // OFF would return brands_tags like these; the online fallback maps them.
