@@ -19,10 +19,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Holds DATASET_SIGNING_KEY; deployment branch policy restricts it to main.
+    environment: dataset-publish
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned by commit SHA (not floating tags) so a moved tag in a
+      # compromised action repo can't inject code into the publish pipeline.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5   # v4.3.1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065   # v5.6.0
         with:
           python-version: "3.12"
 
@@ -58,6 +62,31 @@ jobs:
             echo "::warning::No previous manifest found (first publish?) — skipping shrink check."
           fi
 
+      - name: Sign manifest
+        working-directory: data-pipeline
+        env:
+          DATASET_SIGNING_KEY: ${{ secrets.DATASET_SIGNING_KEY }}
+          # Raw hex Ed25519 public keys the app trusts (DatasetManifest.trustedPublicKeys).
+          # Rotation = swap the environment secret to the standby key; no edit here.
+          TRUSTED_PUBLIC_KEYS: >-
+            cc8c8947d16d824d37f84579a587fdf720c1ac83336f503748c9963a1b39bff9
+            9d8a106e60076bf8137f92eb80c0d11a4f6f17503e2a02eadbf08c101b344e21
+        run: |
+          umask 077
+          printf '%s\n' "$DATASET_SIGNING_KEY" > signing-key.pem
+          trap 'rm -f signing-key.pem signing-pub.pem' EXIT
+          openssl pkey -in signing-key.pem -pubout -out signing-pub.pem
+          ACTUAL="$(openssl pkey -pubin -in signing-pub.pem -pubout -outform DER | tail -c 32 | xxd -p -c 64)"
+          case " $TRUSTED_PUBLIC_KEYS " in
+            *" $ACTUAL "*) echo "Signing with trusted key $ACTUAL" ;;
+            *) echo "::error::DATASET_SIGNING_KEY is not a key the shipped app trusts."; exit 1 ;;
+          esac
+          openssl pkeyutl -sign -inkey signing-key.pem -rawin \
+            -in out/manifest.json -out out/manifest.json.sig
+          # Self-verify before anything is published.
+          openssl pkeyutl -verify -pubin -inkey signing-pub.pem -rawin \
+            -in out/manifest.json -sigfile out/manifest.json.sig
+
       - name: Summarize
         working-directory: data-pipeline
         run: |
@@ -78,4 +107,4 @@ jobs:
             --notes "Rolling isNestle dataset. Current version: $VERSION. Derived data under ODbL (Open Food Facts); brand ownership CC0 (Wikidata)." \
             || true
           gh release upload dataset-latest \
-            out/isnestle.sqlite out/manifest.json --clobber
+            out/isnestle.sqlite out/manifest.json out/manifest.json.sig --clobber
